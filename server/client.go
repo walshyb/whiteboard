@@ -44,7 +44,13 @@ func (c *Client) writePump() {
 
   for {
     select {
-    case message := <-c.send:
+    case message, ok := <-c.send:
+      if !ok {
+				// The hub closed the channel.
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
       w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return

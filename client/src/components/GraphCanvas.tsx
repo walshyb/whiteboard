@@ -98,8 +98,9 @@ export default function GraphCanvas() {
       last.current = { x: e.clientX, y: e.clientY };
     }
 
+    // Only send mouse movements to server ~every 30 frames
     const now = Date.now();
-    if (now - lastSentMouseMovement.current < 33) return; // ~30fps
+    if (now - lastSentMouseMovement.current < 33) return;
     lastSentMouseMovement.current = now;
 
     wsRef.current.send(
