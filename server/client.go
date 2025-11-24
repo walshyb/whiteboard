@@ -9,6 +9,7 @@ type Client struct {
   conn *websocket.Conn
   hub *Hub
   send chan *Message
+  name string
 }
 
 type Message struct {

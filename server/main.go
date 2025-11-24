@@ -4,20 +4,19 @@ import (
     "fmt"
     "github.com/gorilla/websocket"
     "net/http"
-    "sync"
+    "math/rand"
 )
+
+var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
+var nouns = [8]string{"river","lantern","stone", "meadow","circuit","anchor","window","compass",}
 
 var upgrader = websocket.Upgrader{
   ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-    CheckOrigin: func(r *http.Request) bool {
-      return true;
-    },
+  CheckOrigin: func(r *http.Request) bool {
+    return true;
+  },
 }
-
-var clients = make(map[*websocket.Conn]bool) // Connected clients
-var broadcast = make(chan []byte)            // Broadcast channel
-var mutex = &sync.Mutex{}                    // Protect clients map
 
 func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
     conn, err := upgrader.Upgrade(w, r, nil)
@@ -26,10 +25,14 @@ func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
        return
     }
 
+    random_adjective := adjectives[rand.Intn(len(adjectives))]
+    random_noun := nouns[rand.Intn(len(nouns))]
+
     client := &Client {
       conn: conn,
       hub: hub,
       send: make(chan *Message),
+      name: fmt.Sprintf("%s %s", random_adjective, random_noun),
     }
 
     client.hub.register <- client
