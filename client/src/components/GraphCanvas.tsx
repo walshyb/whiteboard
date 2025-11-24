@@ -1,28 +1,28 @@
 import { useEffect, useRef, useState } from "react";
+import "./GraphCanvas.css";
+import { useWebSocket } from "../hooks";
 
 export default function GraphCanvas() {
   const canvasRef = useRef(null);
-  const wsRef = useRef(null);
   const clientId = useRef(null);
+  const [activeClients, setActiveClients] = useState({});
 
-  useEffect(() => {
-    if (wsRef.current) {
-      return;
-    }
-    const socket = new WebSocket("ws://localhost:8080/ws");
-    wsRef.current = socket;
-
-    socket.onmessage = function (e) {
+  const wsRef = useWebSocket((e) => {
       const message = JSON.parse(e.data);
       if (message && message.type === "handshake") {
         clientId.current = message.clientId;
-      } else {
-        console.log(message);
+        return;
       }
-    };
 
-    // Cleanup function for when the component unmounts
-  }, []);
+      if (message.type === "mouseMove") {
+        const remoteClientName = message.clientName;
+        const { x, y } = message.data;
+        setActiveClients((prev) => ({
+          ...prev,
+          [remoteClientName]: { x, y },
+        }));
+      }
+  });
 
   const [viewport, setViewport] = useState({
     x: 0, // pan offset x
@@ -168,19 +168,34 @@ export default function GraphCanvas() {
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        background: "#fff",
-        cursor: "grab",
-      }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onWheel={onWheel}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "#fff",
+          cursor: "grab",
+        }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onWheel={onWheel}
+      />
+      {Object.entries(activeClients).map(([name, pos]) => (
+        <div
+          key={name}
+          className="remote-cursor"
+          style={{
+            left: pos.x,
+            top: pos.y,
+          }}
+        >
+          <div className="remote-cursor-label">{name}</div>
+          <div className="remote-cursor-dot"></div>
+        </div>
+      ))}
+    </>
   );
 }
