@@ -2,15 +2,23 @@ import { useEffect, useRef, useState } from "react";
 
 export default function GraphCanvas() {
   const canvasRef = useRef(null);
-
   const wsRef = useRef(null);
+  const clientId = useRef(null);
 
   useEffect(() => {
+    if (wsRef.current) {
+      return;
+    }
     const socket = new WebSocket("ws://localhost:8080/ws");
     wsRef.current = socket;
 
     socket.onmessage = function (e) {
-      console.log(e);
+      const message = JSON.parse(e.data);
+      if (message && message.type === "handshake") {
+        clientId.current = message.clientId;
+      } else {
+        console.log(message);
+      }
     };
 
     // Cleanup function for when the component unmounts
@@ -98,6 +106,12 @@ export default function GraphCanvas() {
       last.current = { x: e.clientX, y: e.clientY };
     }
 
+    // If ws handshake didn't complete,
+    // don't even bother sending mouse events
+    if (!clientId.current) {
+      return;
+    }
+
     // Only send mouse movements to server ~every 30 frames
     const now = Date.now();
     if (now - lastSentMouseMovement.current < 33) return;
@@ -106,7 +120,8 @@ export default function GraphCanvas() {
     wsRef.current.send(
       JSON.stringify({
         type: "mouseMove",
-        payload: { x: e.clientX, y: e.clientY },
+        clientId: clientId.current,
+        data: { x: e.clientX, y: e.clientY },
       }),
     );
   }
