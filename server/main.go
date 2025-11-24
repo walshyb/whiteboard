@@ -37,7 +37,7 @@ func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
   client := &Client {
     conn: conn,
     hub: hub,
-    send: make(chan *OutboundMessage),
+    send: make(chan *OutboundEvent),
     handshake: make(chan *Handshake),
     name: fmt.Sprintf("%s %s", random_adjective, random_noun),
     id: uuid.New().String(),
@@ -59,7 +59,7 @@ func main() {
     clients: make(map[*Client]bool),
     register: make(chan *Client),
     unregister: make(chan *Client),
-    broadcast: make(chan *InboundMessage),
+    broadcast: make(chan *InboundEvent),
     redis: rdb,
     serverId: serverName,
     ctx: context.Background(),

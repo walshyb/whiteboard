@@ -9,7 +9,7 @@ import (
 type Client struct {
   conn *websocket.Conn
   hub *Hub
-  send chan *OutboundMessage
+  send chan *OutboundEvent
   handshake chan *Handshake 
   name string
   id string
@@ -19,9 +19,9 @@ type Handshake struct {
   ClientId string `json:"clientId"`
 }
 
-type InboundMessage struct {
+type InboundEvent struct {
   ClientId string `json:"clientId"`
-  Data Coordinates `json:"data,omitempty"` 
+  Data interface{} `json:"data,omitempty"` 
   Type string `json:"type"`
   ServerId string
 }
@@ -31,7 +31,7 @@ type Coordinates struct {
   Y int `json:"y"`
 }
 
-type OutboundMessage struct {
+type OutboundEvent struct {
   Data Coordinates `json:"data"` // should rename to payload
   Type string `json:"type"`
   ClientName string `json:"clientName"`
@@ -54,7 +54,7 @@ func (c *Client) readPump() {
     }
 
     // unmarshal inbound message
-    var msg InboundMessage
+    var msg InboundEvent
     if err := json.Unmarshal(message, &msg); err != nil {
       log.Printf("invalid message: %v", err)
       continue

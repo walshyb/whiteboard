@@ -8,19 +8,26 @@ export default function GraphCanvas() {
   const [activeClients, setActiveClients] = useState({});
 
   const wsRef = useWebSocket((e) => {
-    const message = JSON.parse(e.data);
-    if (message.type === "handshake") {
-      clientId.current = message.clientId;
+    const event = JSON.parse(e.data);
+    if (event.type === "handshake") {
+      clientId.current = event.clientId;
       return;
     }
 
-    if (message.type === "mouseMove") {
-      const remoteClientName = message.clientName;
-      const { x, y } = message.data;
+    if (event.type === "mouseMove") {
+      const remoteClientName = event.clientName;
+      const { x, y } = event.data;
       setActiveClients((prev) => ({
         ...prev,
         [remoteClientName]: { x, y },
       }));
+    }
+
+    // Delete cursors of disconnected clients
+    if (event.type === "client_disconnect") {
+      const newActiveClients = { ...activeClients };
+      delete newActiveClients[event.clientName];
+      setActiveClients(newActiveClients);
     }
   });
 
