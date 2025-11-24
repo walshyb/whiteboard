@@ -117,11 +117,15 @@ export default function GraphCanvas() {
     if (now - lastSentMouseMovement.current < 33) return;
     lastSentMouseMovement.current = now;
 
+    // World coordinates
+    const wx = (e.clientX - viewport.x) / viewport.scale;
+    const wy = (e.clientY - viewport.y) / viewport.scale;
+
     wsRef.current.send(
       JSON.stringify({
         type: "mouseMove",
         clientId: clientId.current,
-        data: { x: e.clientX, y: e.clientY },
+        data: { x: wx, y: wy },
       }),
     );
   }
@@ -199,21 +203,24 @@ export default function GraphCanvas() {
       />
       {Object.entries(activeClients).map(([name, pos]) => {
         // only show cursor if coordinates are in window
+        if (pos.x === -1 && pos.y === -1) return;
+
+        // Convert world coords to canvas coordinates
+        const screenX = pos.x * viewport.scale + viewport.x;
+        const screenY = pos.y * viewport.scale + viewport.y;
+
         return (
-          pos.x > -1 &&
-          pos.y > -1 && (
-            <div
-              key={name}
-              className="remote-cursor"
-              style={{
-                left: pos.x,
-                top: pos.y,
-              }}
-            >
-              <div className="remote-cursor-label">{name}</div>
-              <div className="remote-cursor-dot"></div>
-            </div>
-          )
+          <div
+            key={name}
+            className="remote-cursor"
+            style={{
+              left: screenX,
+              top: screenY,
+            }}
+          >
+            <div className="remote-cursor-label">{name}</div>
+            <div className="remote-cursor-dot"></div>
+          </div>
         );
       })}
     </>
