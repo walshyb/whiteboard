@@ -4,7 +4,6 @@ import (
   "github.com/redis/go-redis/v9"
   "encoding/json"
   "context"
-  "fmt"
 )
 
 type Hub struct{
@@ -74,18 +73,9 @@ func (hub *Hub) subscribeRedis() {
     for msg := range ch {
       var m InboundMessage
 
-      jsonData, err := json.MarshalIndent(msg.Payload, "", "  ") // Use 2 spaces for indentation
-      if err != nil {
-        fmt.Println("Error marshalling JSON:", err)
-        return
-      }
-
       //if m.ServerId == hub.serverId {
       //  continue
       //}
-
-      // Print the pretty-printed JSON
-      fmt.Println(string(jsonData))
 
       if err := json.Unmarshal([]byte(msg.Payload), &m); err != nil {
         println("Error reading JSON inbound message")

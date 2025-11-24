@@ -8,20 +8,20 @@ export default function GraphCanvas() {
   const [activeClients, setActiveClients] = useState({});
 
   const wsRef = useWebSocket((e) => {
-      const message = JSON.parse(e.data);
-      if (message && message.type === "handshake") {
-        clientId.current = message.clientId;
-        return;
-      }
+    const message = JSON.parse(e.data);
+    if (message.type === "handshake") {
+      clientId.current = message.clientId;
+      return;
+    }
 
-      if (message.type === "mouseMove") {
-        const remoteClientName = message.clientName;
-        const { x, y } = message.data;
-        setActiveClients((prev) => ({
-          ...prev,
-          [remoteClientName]: { x, y },
-        }));
-      }
+    if (message.type === "mouseMove") {
+      const remoteClientName = message.clientName;
+      const { x, y } = message.data;
+      setActiveClients((prev) => ({
+        ...prev,
+        [remoteClientName]: { x, y },
+      }));
+    }
   });
 
   const [viewport, setViewport] = useState({
@@ -130,6 +130,20 @@ export default function GraphCanvas() {
     dragging.current = false;
   }
 
+  function onMouseLeave() {
+    if (!clientId.current) {
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        type: "mouseMove",
+        clientId: clientId.current,
+        data: { x: -1, y: -1 },
+      }),
+    );
+  }
+
   function resizeCanvas(canvas) {
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
@@ -179,23 +193,29 @@ export default function GraphCanvas() {
         }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
         onWheel={onWheel}
       />
-      {Object.entries(activeClients).map(([name, pos]) => (
-        <div
-          key={name}
-          className="remote-cursor"
-          style={{
-            left: pos.x,
-            top: pos.y,
-          }}
-        >
-          <div className="remote-cursor-label">{name}</div>
-          <div className="remote-cursor-dot"></div>
-        </div>
-      ))}
+      {Object.entries(activeClients).map(([name, pos]) => {
+        // only show cursor if coordinates are in window
+        return (
+          pos.x > -1 &&
+          pos.y > -1 && (
+            <div
+              key={name}
+              className="remote-cursor"
+              style={{
+                left: pos.x,
+                top: pos.y,
+              }}
+            >
+              <div className="remote-cursor-label">{name}</div>
+              <div className="remote-cursor-dot"></div>
+            </div>
+          )
+        );
+      })}
     </>
   );
 }
