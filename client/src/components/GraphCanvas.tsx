@@ -43,6 +43,7 @@ export default function GraphCanvas() {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+    canvas.addEventListener("wheel", onWheel);
 
     resizeCanvas(canvas);
 
@@ -90,7 +91,10 @@ export default function GraphCanvas() {
     }
 
     draw();
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      canvas.removeEventListener("wheel", onWheel);
+    };
   }, [viewport]);
 
   // Panning
@@ -206,7 +210,6 @@ export default function GraphCanvas() {
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         onMouseUp={onMouseUp}
-        onWheel={onWheel}
       />
       {Object.entries(activeClients).map(([name, pos]) => {
         // only show cursor if coordinates are in window

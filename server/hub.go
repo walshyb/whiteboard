@@ -64,7 +64,21 @@ func (hub *Hub) run() {
         println("error getting client ID from redis")
       }
 
-      coords, _ := message.Data.(Coordinates)
+      var coords Coordinates
+
+      // marshal the generic interface{} back to JSON
+      b, err := json.Marshal(message.Data)
+      if err != nil {
+        println("error marshaling data:", err.Error())
+        continue
+      }
+
+      // unmarshal into your typed struct
+      if err := json.Unmarshal(b, &coords); err != nil {
+        println("error unmarshaling data into Coordinates:", err.Error())
+        continue
+      }
+
       payload := OutboundEvent{
         ClientName: clientName,
         Data: coords,
