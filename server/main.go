@@ -2,14 +2,12 @@ package main
 
 import (
   "fmt"
-  "github.com/gorilla/websocket"
   "net/http"
-  "math/rand"
-  "github.com/redis/go-redis/v9"
   "strconv"
   "time"
-  "github.com/google/uuid"
   "context"
+
+  "github.com/gorilla/websocket"
 )
 
 var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
@@ -25,22 +23,10 @@ var upgrader = websocket.Upgrader{
 }
 
 func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
-  conn, err := upgrader.Upgrade(w, r, nil)
-  if err != nil {
-    fmt.Println("Error upgrading:", err)
+  client := makeNewClient(hub, w, r)
+
+  if client == nil {
     return
-  }
-
-  random_adjective := adjectives[rand.Intn(len(adjectives))]
-  random_noun := nouns[rand.Intn(len(nouns))]
-
-  client := &Client {
-    conn: conn,
-    hub: hub,
-    send: make(chan *OutboundEvent),
-    handshake: make(chan *Handshake),
-    name: fmt.Sprintf("%s %s", random_adjective, random_noun),
-    id: uuid.New().String(),
   }
 
   client.hub.register <- client
@@ -50,19 +36,19 @@ func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-  rdb := redis.NewClient(&redis.Options{
-    Addr:     "localhost:6379",
-    Password: "", // no password set
-    DB:       0,  // use default DB
-  })
+  rdb := makeRedisClient()
+  ctx := context.Background()
+  mongo := makeMongoClient(ctx)
+
   hub := &Hub {
     clients: make(map[*Client]bool),
     register: make(chan *Client),
     unregister: make(chan *Client),
     broadcast: make(chan *InboundEvent),
     redis: rdb,
+    mongo: mongo,
     serverId: serverName,
-    ctx: context.Background(),
+    ctx: ctx,
   }
 
   hub.subscribeRedis()

@@ -6,6 +6,8 @@ export default function GraphCanvas() {
   const canvasRef = useRef(null);
   const clientId = useRef(null);
   const [activeClients, setActiveClients] = useState({});
+  type Mode = "drag" | "ellipse" | "select" | "rectangle";
+  const [mode, setMode] = useState<Mode>("drag");
 
   const wsRef = useWebSocket((e) => {
     const event = JSON.parse(e.data);
@@ -99,6 +101,7 @@ export default function GraphCanvas() {
 
   // Panning
   function onMouseDown(e) {
+    console.log("click");
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
   }

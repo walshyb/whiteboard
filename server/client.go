@@ -1,9 +1,14 @@
 package main
 
 import (
-  "github.com/gorilla/websocket"
   "log"
   "encoding/json"
+  "math/rand"
+  "fmt"
+  "net/http"
+
+  "github.com/gorilla/websocket"
+  "github.com/google/uuid"
 )
 
 type Client struct {
@@ -35,6 +40,26 @@ type OutboundEvent struct {
   Data Coordinates `json:"data"` // should rename to payload
   Type string `json:"type"`
   ClientName string `json:"clientName"`
+}
+
+func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
+  conn, err := upgrader.Upgrade(w, r, nil)
+  if err != nil {
+    fmt.Println("Error upgrading:", err)
+    return nil
+  }
+
+  random_adjective := adjectives[rand.Intn(len(adjectives))]
+  random_noun := nouns[rand.Intn(len(nouns))]
+
+  return &Client {
+    conn: conn,
+    hub: hub,
+    send: make(chan *OutboundEvent),
+    handshake: make(chan *Handshake),
+    name: fmt.Sprintf("%s %s", random_adjective, random_noun),
+    id: uuid.New().String(),
+  }
 }
 
 /*

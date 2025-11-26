@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export function useWebSocket(handleOnMessage) {
+export function useWebSocket(clientId, handleOnMessage) {
   const wsRef = useRef(null);
   const reconnectTimeout = useRef(null);
   const initialized = useRef(false);
@@ -15,12 +15,12 @@ export function useWebSocket(handleOnMessage) {
     };
 
     socket.onerror = (err) => {
-      console.error("WS error", err);
+      //console.error("WS error", err);
       socket.close(); // trigger reconnect via onclose
     };
 
     socket.onclose = () => {
-      console.log("WS closed");
+      //console.log("WS closed");
       reconnectTimeout.current = setTimeout(connect, reconnectDelay);
     };
   };

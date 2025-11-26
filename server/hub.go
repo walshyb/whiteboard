@@ -1,10 +1,11 @@
 package main
 
 import (
-  "github.com/redis/go-redis/v9"
   "encoding/json"
   "log"
   "context"
+  "github.com/redis/go-redis/v9"
+  "go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Hub struct{
@@ -13,6 +14,7 @@ type Hub struct{
   unregister chan *Client
   broadcast chan *InboundEvent
   redis *redis.Client
+  mongo *mongo.Client
   serverId string
   ctx context.Context
 }
@@ -73,7 +75,6 @@ func (hub *Hub) run() {
         continue
       }
 
-      // unmarshal into your typed struct
       if err := json.Unmarshal(b, &coords); err != nil {
         println("error unmarshaling data into Coordinates:", err.Error())
         continue
