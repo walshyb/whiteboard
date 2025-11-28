@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
-import {
-  ClientMessage,
-  ServerMessage,
-  MouseEvent,
-} from "../proto/generated/events";
+import { ClientMessage, ServerMessage } from "../proto/generated/events";
 
 interface ActiveClients {
   [clientName: string]: {
@@ -34,7 +30,7 @@ export default function GraphCanvas() {
     };
   });
 
-  const [wsRef, sendWsMessage] = useWebSocket(
+  const [_wsRef, sendWsMessage] = useWebSocket(
     (serverMessage: ServerMessage) => {
       // Handshake
       if (serverMessage.clientId) {
