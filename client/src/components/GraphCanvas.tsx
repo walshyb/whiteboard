@@ -39,7 +39,7 @@ export default function GraphCanvas() {
       }
 
       const mouseEvent = serverMessage.eventData?.mouseEvent;
-      if (mouseEvent) {
+      if (mouseEvent && serverMessage.senderName) {
         const remoteClientName = serverMessage.senderName;
         const { x, y } = mouseEvent;
         setActiveClients((prev) => ({
@@ -198,7 +198,8 @@ export default function GraphCanvas() {
   }
 
   function resizeCanvas(canvas: HTMLCanvasElement) {
-    const ctx: CanvasRenderingContext2D | any = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
