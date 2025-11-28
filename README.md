@@ -6,7 +6,7 @@ This just started off as an idea for a real-time whiteboard app, purely for lear
 
 I originally thought "oh yeah, this can just be a quick little project where I just throw down a canvas, hook up a little websocket, and badda bing!" But as I continued down the path of learning, I kept finding more things that I should learn before progressing, or kept adding my own scope creep as I got more ideas.
 
-All in all, this project (thusfar) has helped me learn more about: Golang, websockets, HTML canvas, MongoDB (and nosql), Protobufs (AHH I love protobufs; idk how i ever built apis without server/client type safety??)
+All in all, this project (thus far) has helped me learn more about: Golang, websockets, HTML canvas, MongoDB (and nosql), Protobufs (AHH I love protobufs; idk how i ever built apis without server/client type safety??)
 
 ## System Requirements
 
@@ -15,19 +15,19 @@ All in all, this project (thusfar) has helped me learn more about: Golang, webso
 - Go ^1.25.x
 - make ^3.x
 - Redis
-- MonogDB
+- MongoDB
 
 ## Getting Started
 
 ### 1. clone repo
 
-```
+```bash
 git clone git@github.com:walshyb/whiteboard.git && cd whiteboard
 ```
 
 ### 2. Download and build dependencies
 
-```
+```bash
 # Install Client deps
 cd client
 npm install
@@ -43,9 +43,9 @@ make
 ### 3. Run the services
 
 - Run Redis (system-dependent)
-- Run MonogoDB (system-dependent)
+- Run MongooDB (system-dependent)
 
-```
+```bash
 # Run the backend
 go run .
 
