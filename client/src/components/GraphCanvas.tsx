@@ -142,9 +142,9 @@ export default function GraphCanvas() {
       return;
     }
 
-    // Only send mouse movements to server ~every 30 frames
+    // Only send mouse movements to server ~every 70 frames
     const now = Date.now();
-    if (now - lastSentMouseMovement.current < 33) return;
+    if (now - lastSentMouseMovement.current < 70) return;
     lastSentMouseMovement.current = now;
 
     // World coordinates

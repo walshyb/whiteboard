@@ -107,7 +107,6 @@ func (hub *Hub) subscribeRedis() {
       //}
 
       if err := proto.Unmarshal([]byte(msg.Payload), &m); err != nil {
-        println("Error reading JSON inbound message")
         continue
       }
 

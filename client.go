@@ -53,7 +53,7 @@ func (c *Client) readPump() {
   for {
     _, message, err := c.conn.ReadMessage()
     if err != nil {
-      log.Printf("error: %v", err)
+      //log.Printf("error: %v", err)
       return
     }
 
