@@ -25,7 +25,8 @@ var upgrader = websocket.Upgrader{
 
 func wsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// Decline connection if it's not a websocket
-	if r.Header.Get("Connection") != "Upgrade" || r.Header.Get("Upgrade") != "websocket" {
+	if !websocket.IsWebSocketUpgrade(r) {
+		http.Error(w, "WebSocket upgrade required", http.StatusUpgradeRequired)
 		return
 	}
 	client := makeNewClient(hub, w, r)
