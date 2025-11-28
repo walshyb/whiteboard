@@ -2,10 +2,12 @@ package main
 
 import (
   "time"
+	"context"
 
+	"github.com/google/uuid"
   "go.mongodb.org/mongo-driver/v2/mongo"
   "go.mongodb.org/mongo-driver/v2/bson"
-  "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type Canvas struct {
@@ -17,7 +19,7 @@ type Canvas struct {
 }
 
 type Shape struct {
-  ID          string        `bson:"id"`
+  Id          string        `bson:"id"`
   Type        string        `bson:"type"` // rect, ellipse
   X           float64       `bson:"x,omitempty"`
   Y           float64       `bson:"y,omitempty"`
@@ -29,7 +31,7 @@ type Shape struct {
   StrokeWidth float64       `bson:"strokeWidth,omitempty"`
 }
 
-func EnsureDemoBoard(ctx context.Context, col *mongo.Collection) *mongo.UpdateResult, error {
+func EnsureDemoBoard(ctx context.Context, col *mongo.Collection) (*mongo.UpdateResult, error) {
   filter := bson.M{"_id": "demo"}
 
   update := bson.M{
@@ -39,13 +41,15 @@ func EnsureDemoBoard(ctx context.Context, col *mongo.Collection) *mongo.UpdateRe
     },
   }
 
-  opts := options.Update().SetUpsert(true)
+	opts := options.UpdateOne().SetUpsert(true)
 
   return col.UpdateOne(ctx, filter, update, opts)
 }
 
 func AddShape(ctx context.Context, col *mongo.Collection, shape Shape) error {
   filter := bson.M{"_id": "demo"}
+	shapeId := uuid.NewString()
+	shape.Id = shapeId
 
   update := bson.M{
     "$push": bson.M{

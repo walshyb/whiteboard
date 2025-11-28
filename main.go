@@ -8,6 +8,7 @@ import (
   "context"
 
   "github.com/gorilla/websocket"
+	 events "github.com/walshyb/whiteboard/proto"
 )
 
 var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
@@ -44,7 +45,7 @@ func main() {
     clients: make(map[*Client]bool),
     register: make(chan *Client),
     unregister: make(chan *Client),
-    broadcast: make(chan *InboundEvent),
+    broadcast: make(chan *events.ClientMessage),
     redis: rdb,
     mongo: mongo,
     serverId: serverName,

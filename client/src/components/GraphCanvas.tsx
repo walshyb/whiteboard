@@ -3,14 +3,14 @@ import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
 
 export default function GraphCanvas() {
-  const canvasRef = useRef(null);
+  const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
   const clientId = useRef(null);
   const [activeClients, setActiveClients] = useState({});
   type Mode = "drag" | "ellipse" | "select" | "rectangle";
   const [mode, setMode] = useState<Mode>("drag");
 
-  const wsRef = useWebSocket((e) => {
-    const event = JSON.parse(e.data);
+  const wsRef: React.RefObject<WebSocket | null> = useWebSocket((e: any) => {
+    const event: any = JSON.parse(e.data);
     if (event.type === "handshake") {
       clientId.current = event.clientId;
       return;
@@ -43,13 +43,13 @@ export default function GraphCanvas() {
   const last = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    const ctx: CanvasRenderingContext2D | any = canvas.getContext("2d");
     canvas.addEventListener("wheel", onWheel);
 
     resizeCanvas(canvas);
 
-    let raf;
+    let raf: number;
     function draw() {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -100,14 +100,14 @@ export default function GraphCanvas() {
   }, [viewport]);
 
   // Panning
-  function onMouseDown(e) {
+  function onMouseDown(e: MouseEvent | any) {
     console.log("click");
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
   }
 
   const lastSentMouseMovement = useRef(0);
-  function onMouseMove(e) {
+  function onMouseMove(e: MouseEvent | any) {
     const dx = e.clientX - last.current.x;
     const dy = e.clientY - last.current.y;
 
@@ -135,7 +135,7 @@ export default function GraphCanvas() {
     const wx = (e.clientX - viewport.x) / viewport.scale;
     const wy = (e.clientY - viewport.y) / viewport.scale;
 
-    wsRef.current.send(
+    wsRef.current?.send(
       JSON.stringify({
         type: "mouseMove",
         clientId: clientId.current,
@@ -153,7 +153,7 @@ export default function GraphCanvas() {
       return;
     }
 
-    wsRef.current.send(
+    wsRef.current?.send(
       JSON.stringify({
         type: "mouseMove",
         clientId: clientId.current,
@@ -162,8 +162,8 @@ export default function GraphCanvas() {
     );
   }
 
-  function resizeCanvas(canvas) {
-    const ctx = canvas.getContext("2d");
+  function resizeCanvas(canvas: HTMLCanvasElement) {
+    const ctx: CanvasRenderingContext2D | any = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -171,7 +171,7 @@ export default function GraphCanvas() {
     ctx.scale(dpr, dpr);
   }
 
-  function onWheel(e) {
+  function onWheel(e: WheelEvent) {
     e.preventDefault();
 
     const ZOOM = 1.08;

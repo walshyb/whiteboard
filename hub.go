@@ -1,18 +1,19 @@
 package main
 
 import (
-  "encoding/json"
   "log"
   "context"
   "github.com/redis/go-redis/v9"
   "go.mongodb.org/mongo-driver/v2/mongo"
+	"google.golang.org/protobuf/proto"
+	 events "github.com/walshyb/whiteboard/proto"
 )
 
 type Hub struct{
   clients map[*Client]bool
   register chan *Client
   unregister chan *Client
-  broadcast chan *InboundEvent
+  broadcast chan *events.ClientMessage
   redis *redis.Client
   mongo *mongo.Client
   serverId string
@@ -41,9 +42,12 @@ func (hub *Hub) run() {
           log.Fatalf("Error deleting client: %v", err)
         }
 
-        payload := OutboundEvent{
-          Type: "client_disconnect",
-          ClientName: client.name,
+        payload := events.ServerMessage{
+					NotificationType: &events.ServerMessage_ClientDisconnect {
+						ClientDisconnect: &events.ClientDisconnectEvent{
+							ClientName: client.name,
+						},
+					},
         }
 
         for c := range hub.clients {
@@ -55,44 +59,32 @@ func (hub *Hub) run() {
           }
         }
       }
-    case message := <-hub.broadcast:
-      if message.ClientId == "" {
+    case clientMessage := <-hub.broadcast:
+      if clientMessage.ClientId == "" {
         continue
       }
 
-      clientName, err := hub.redis.Get(hub.ctx, message.ClientId).Result()
+      clientName, err := hub.redis.Get(hub.ctx, clientMessage.ClientId).Result()
 
       if err != nil {
         println("error getting client ID from redis")
+				continue
       }
 
-      var coords Coordinates
-
-      // marshal the generic interface{} back to JSON
-      b, err := json.Marshal(message.Data)
-      if err != nil {
-        println("error marshaling data:", err.Error())
-        continue
-      }
-
-      if err := json.Unmarshal(b, &coords); err != nil {
-        println("error unmarshaling data into Coordinates:", err.Error())
-        continue
-      }
-
-      payload := OutboundEvent{
-        ClientName: clientName,
-        Data: coords,
-        Type: message.Type,
+      serverMessage := &events.ServerMessage{
+				SenderName: clientName,
+				NotificationType: &events.ServerMessage_EventData {
+					EventData: clientMessage.GetEvent(),
+				},
       }
 
       for client := range hub.clients {
-        if client.id == message.ClientId {
+        if client.id == clientMessage.GetClientId() {
           continue
         }
 
         select {
-        case client.send <- &payload:
+        case client.send <- serverMessage:
         default:
           close(client.send)
           delete(hub.clients, client)
@@ -108,13 +100,13 @@ func (hub *Hub) subscribeRedis() {
 
   go func() {
     for msg := range ch {
-      var m InboundEvent
+      var m events.ClientMessage
 
       //if m.ServerId == hub.serverId {
       //  continue
       //}
 
-      if err := json.Unmarshal([]byte(msg.Payload), &m); err != nil {
+      if err := proto.Unmarshal([]byte(msg.Payload), &m); err != nil {
         println("Error reading JSON inbound message")
         continue
       }

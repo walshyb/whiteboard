@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
-export function useWebSocket(clientId, handleOnMessage) {
-  const wsRef = useRef(null);
-  const reconnectTimeout = useRef(null);
+export function useWebSocket(handleOnMessage: Function) {
+  const wsRef: React.RefObject<WebSocket | null> = useRef(null);
+  const reconnectTimeout: React.RefObject<number | null> = useRef(null);
   const initialized = useRef(false);
   const reconnectDelay = 2000; // start delay in ms
 
