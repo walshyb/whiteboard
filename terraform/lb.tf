@@ -3,6 +3,7 @@ resource "aws_lb" "app_lb" {
   name               = "app-whiteboard-lb"
   internal           = false
   load_balancer_type = "application"
+  drop_invalid_header_fields = true
   security_groups    = [aws_security_group.lb_sg.id]
   subnets = [
     aws_subnet.public_az_a.id,

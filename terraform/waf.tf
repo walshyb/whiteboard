@@ -23,17 +23,39 @@ resource "aws_wafv2_web_acl" "rate_limit_acl" {
     }
 
     statement {
-      rate_limit_statement {
+      rate_based_statement {
         # Limit: 500 requests per IP over a 5-minute window.
         # A starting point for protecting against rapid handshakes/DDoS.
         limit = 500 
-        aggregate_key = "IP" # Track limit per originating IP address
+        aggregate_key_type = "IP" # Track limit per originating IP address
       }
     }
 
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "RateLimitMetrics"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "Log4jShellProtection"
+    priority = 0
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "Log4jShellMetrics"
       sampled_requests_enabled   = true
     }
   }
