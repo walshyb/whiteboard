@@ -19,11 +19,31 @@ All in all, this project (thus far) has helped me learn more about: Golang, webs
 
 ## Getting Started
 
-### 1. clone repo
+### clone the repo
 
 ```bash
 git clone git@github.com:walshyb/whiteboard.git && cd whiteboard
 ```
+
+## Using Docker:
+
+### Build the docker images and run the mongo, redis, and server containers:
+
+```bash
+# Note: Default behavior binds to local ports, so ensure that ports 8080, 27017, and 6379 are free
+docker compose up --build -d
+```
+
+### Run the frontend
+
+```bash
+# Install Client deps
+cd client && npm install
+cd .. and make
+cd client && npm run dev
+```
+
+## Full Local Development:
 
 ### 2. Download and build dependencies
 
@@ -43,7 +63,7 @@ make
 ### 3. Run the services
 
 - Run Redis (system-dependent)
-- Run MongooDB (system-dependent)
+- Run MongoDB (system-dependent)
 
 ```bash
 # Run the backend

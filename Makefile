@@ -13,7 +13,7 @@ CLIENT_OUT_DIR := client/src/proto/generated
 TS_PROTO_PLUGIN := client/node_modules/.bin/protoc-gen-ts_proto
 TS_OPTS := esModuleInterop=true,forceLong=string,outputServices=false
 
-.PHONY: all proto_go proto_dev clean help
+.PHONY: all proto_go proto_dev proto_ts clean help
 
 all: proto_dev
 
@@ -28,6 +28,14 @@ proto_go: $(PROTO_FILES)
 		--proto_path=$(PROTO_DIR) \
 		--go_out=$(GO_OUT_DIR) \
 		--go_opt=$(GO_OPTS) \
+		$(PROTO_FILES)
+
+proto_ts: $(PROTO_FILES)
+	@echo "Compiling TS Protobuf files"
+	protoc \
+		--plugin=$(TS_PROTO_PLUGIN) \
+    --ts_proto_opt=$(TS_OPTS) \
+		--ts_proto_out=$(CLIENT_OUT_DIR) \
 		$(PROTO_FILES)
 
 proto_dev: $(PROTO_FILES)
