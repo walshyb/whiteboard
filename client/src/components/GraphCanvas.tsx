@@ -55,9 +55,11 @@ export default function GraphCanvas() {
       // Delete cursors of disconnected clients
       const disconnectedClientName = serverMessage.clientDisconnect?.clientName;
       if (disconnectedClientName) {
-        const newActiveClients = { ...activeClients };
-        delete newActiveClients[disconnectedClientName];
-        setActiveClients(newActiveClients);
+        setActiveClients((prev) => {
+          const newActiveClients = { ...prev };
+          delete newActiveClients[disconnectedClientName];
+          return newActiveClients;
+        });
       }
     },
   );
