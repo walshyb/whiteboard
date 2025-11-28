@@ -17,8 +17,6 @@ resource "aws_instance" "app_server" {
     http_put_response_hop_limit = 1
   }
 
-  monitoring = true
-
   user_data = <<-EOF
               #!/bin/bash
 
