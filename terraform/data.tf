@@ -10,6 +10,6 @@ data "aws_ami" "amazon_linux_2" {
 
   filter {
     name   = "architecture"
-    values = ["arm64"] # required for t4g.mircro
+    values = ["arm64"] # required for t4g.micro
   }
 }
