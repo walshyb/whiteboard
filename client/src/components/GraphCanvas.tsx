@@ -1,37 +1,64 @@
 import { useEffect, useRef, useState } from "react";
 import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
+import { ClientMessage, ServerMessage } from "../proto/generated/events";
+
+interface ActiveClients {
+  [clientName: string]: {
+    x: number;
+    y: number;
+  };
+}
 
 export default function GraphCanvas() {
-  const canvasRef = useRef(null);
-  const clientId = useRef(null);
-  const [activeClients, setActiveClients] = useState({});
+  const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
+  const clientId = useRef<string | null>(null);
+  const [activeClients, setActiveClients] = useState<ActiveClients>({});
   type Mode = "drag" | "ellipse" | "select" | "rectangle";
   const [mode, setMode] = useState<Mode>("drag");
 
-  const wsRef = useWebSocket((e) => {
-    const event = JSON.parse(e.data);
-    if (event.type === "handshake") {
-      clientId.current = event.clientId;
-      return;
+  useEffect(() => {
+    function onWindowResize() {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        resizeCanvas(canvas);
+      }
     }
+    window.addEventListener("resize", onWindowResize);
+    return () => {
+      window.removeEventListener("resize", onWindowResize);
+    };
+  }, []);
 
-    if (event.type === "mouseMove") {
-      const remoteClientName = event.clientName;
-      const { x, y } = event.data;
-      setActiveClients((prev) => ({
-        ...prev,
-        [remoteClientName]: { x, y },
-      }));
-    }
+  const [_wsRef, sendWsMessage] = useWebSocket(
+    (serverMessage: ServerMessage) => {
+      // Handshake
+      if (serverMessage.clientId) {
+        clientId.current = serverMessage.clientId;
+        return;
+      }
 
-    // Delete cursors of disconnected clients
-    if (event.type === "client_disconnect") {
-      const newActiveClients = { ...activeClients };
-      delete newActiveClients[event.clientName];
-      setActiveClients(newActiveClients);
-    }
-  });
+      const mouseEvent = serverMessage.eventData?.mouseEvent;
+      if (mouseEvent && serverMessage.senderName) {
+        const remoteClientName = serverMessage.senderName;
+        const { x, y } = mouseEvent;
+        setActiveClients((prev) => ({
+          ...prev,
+          [remoteClientName]: { x, y },
+        }));
+      }
+
+      // Delete cursors of disconnected clients
+      const disconnectedClientName = serverMessage.clientDisconnect?.clientName;
+      if (disconnectedClientName) {
+        setActiveClients((prev) => {
+          const newActiveClients = { ...prev };
+          delete newActiveClients[disconnectedClientName];
+          return newActiveClients;
+        });
+      }
+    },
+  );
 
   const [viewport, setViewport] = useState({
     x: 0, // pan offset x
@@ -43,13 +70,13 @@ export default function GraphCanvas() {
   const last = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    const ctx: CanvasRenderingContext2D | any = canvas.getContext("2d");
     canvas.addEventListener("wheel", onWheel);
 
     resizeCanvas(canvas);
 
-    let raf;
+    let raf: number;
     function draw() {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -100,14 +127,14 @@ export default function GraphCanvas() {
   }, [viewport]);
 
   // Panning
-  function onMouseDown(e) {
+  function onMouseDown(e: MouseEvent | any) {
     console.log("click");
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
   }
 
   const lastSentMouseMovement = useRef(0);
-  function onMouseMove(e) {
+  function onMouseMove(e: MouseEvent | any) {
     const dx = e.clientX - last.current.x;
     const dy = e.clientY - last.current.y;
 
@@ -126,22 +153,26 @@ export default function GraphCanvas() {
       return;
     }
 
-    // Only send mouse movements to server ~every 30 frames
+    // Only send mouse movements to server ~every 70 frames
     const now = Date.now();
-    if (now - lastSentMouseMovement.current < 33) return;
+    if (now - lastSentMouseMovement.current < 70) return;
     lastSentMouseMovement.current = now;
 
     // World coordinates
     const wx = (e.clientX - viewport.x) / viewport.scale;
     const wy = (e.clientY - viewport.y) / viewport.scale;
 
-    wsRef.current.send(
-      JSON.stringify({
-        type: "mouseMove",
-        clientId: clientId.current,
-        data: { x: wx, y: wy },
-      }),
-    );
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      event: {
+        mouseEvent: {
+          x: wx,
+          y: wy,
+        },
+      },
+    };
+
+    sendWsMessage(clientMessage);
   }
 
   function onMouseUp() {
@@ -153,17 +184,22 @@ export default function GraphCanvas() {
       return;
     }
 
-    wsRef.current.send(
-      JSON.stringify({
-        type: "mouseMove",
-        clientId: clientId.current,
-        data: { x: -1, y: -1 },
-      }),
-    );
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      event: {
+        mouseEvent: {
+          x: -1,
+          y: -1,
+        },
+      },
+    };
+
+    sendWsMessage(clientMessage);
   }
 
-  function resizeCanvas(canvas) {
+  function resizeCanvas(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -171,7 +207,7 @@ export default function GraphCanvas() {
     ctx.scale(dpr, dpr);
   }
 
-  function onWheel(e) {
+  function onWheel(e: WheelEvent) {
     e.preventDefault();
 
     const ZOOM = 1.08;

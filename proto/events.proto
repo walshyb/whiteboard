@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package events;
+
+option go_package = "github.com/walshyb/whiteboard/proto;events";
+
+message ClientMessage {
+  string client_id = 1;
+
+  // Used by the server to identify the publishing instance.
+  // Go server sets this BEFORE publishing to Redis.
+  optional string server_id = 2; 
+
+  Event event = 10;
+}
+
+message ServerMessage {
+  string sender_name = 1;
+
+  // Only for handshakes
+  string client_id = 2;
+
+  oneof notification_type {
+    Event event_data = 10;
+
+    ClientConnectEvent client_connected = 11;
+    ClientDisconnectEvent client_disconnect = 12;
+  }
+}
+
+message Event {
+  oneof event_type {
+    MouseEvent mouse_event = 1; 
+    AddShapeEvent add_shape = 2;
+  }
+}
+
+
+message MouseEvent {
+  double x = 1;
+  double y = 2;
+}
+
+message AddShapeEvent {
+  string shape_id = 1;
+  string shape_type = 2;
+}
+
+message ClientDisconnectEvent {
+  string client_name = 1;
+}
+
+message ClientConnectEvent {
+  string client_name = 1;
+}

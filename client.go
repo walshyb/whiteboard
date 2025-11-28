@@ -2,44 +2,23 @@ package main
 
 import (
   "log"
-  "encoding/json"
   "math/rand"
   "fmt"
   "net/http"
 
   "github.com/gorilla/websocket"
   "github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
+	 events "github.com/walshyb/whiteboard/proto"
 )
 
 type Client struct {
   conn *websocket.Conn
   hub *Hub
-  send chan *OutboundEvent
-  handshake chan *Handshake 
+  send chan *events.ServerMessage
+  handshake chan *events.ServerMessage
   name string
   id string
-}
-
-type Handshake struct {
-  ClientId string `json:"clientId"`
-}
-
-type InboundEvent struct {
-  ClientId string `json:"clientId"`
-  Data interface{} `json:"data,omitempty"` 
-  Type string `json:"type"`
-  ServerId string
-}
-
-type Coordinates struct {
-  X int `json:"x"`
-  Y int `json:"y"`
-}
-
-type OutboundEvent struct {
-  Data Coordinates `json:"data"` // should rename to payload
-  Type string `json:"type"`
-  ClientName string `json:"clientName"`
 }
 
 func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
@@ -55,8 +34,8 @@ func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
   return &Client {
     conn: conn,
     hub: hub,
-    send: make(chan *OutboundEvent),
-    handshake: make(chan *Handshake),
+		send: make(chan *events.ServerMessage),
+    handshake: make(chan *events.ServerMessage),
     name: fmt.Sprintf("%s %s", random_adjective, random_noun),
     id: uuid.New().String(),
   }
@@ -74,29 +53,29 @@ func (c *Client) readPump() {
   for {
     _, message, err := c.conn.ReadMessage()
     if err != nil {
-      log.Printf("error: %v", err)
+      //log.Printf("error: %v", err)
       return
     }
 
     // unmarshal inbound message
-    var msg InboundEvent
-    if err := json.Unmarshal(message, &msg); err != nil {
+    var msg events.ClientMessage 
+    if err := proto.Unmarshal(message, &msg); err != nil {
       log.Printf("invalid message: %v", err)
       continue
     }
 
     // assign server ID
-    msg.ServerId = c.hub.serverId
+    msg.ServerId = &c.hub.serverId
 
     // marshal it back to JSON
-    jsonBytes, err := json.Marshal(msg)
+    protoBytes, err := proto.Marshal(&msg)
     if err != nil {
       log.Printf("marshal error: %v", err)
       continue
     }
 
     // publish to Redis
-    c.hub.redis.Publish(c.hub.ctx, "mouse_events", jsonBytes)
+    c.hub.redis.Publish(c.hub.ctx, "mouse_events", protoBytes)
 
   }
 }
@@ -116,8 +95,8 @@ func (c *Client) writePump() {
         continue
       }
 
-      jsonBytes, _ := json.Marshal(message)
-      err := c.conn.WriteMessage(websocket.TextMessage, jsonBytes)
+      protoBytes , _ := proto.Marshal(message)
+      err := c.conn.WriteMessage(websocket.BinaryMessage, protoBytes)
 
       if err != nil {
         log.Println("WriteMessage error:", err)
@@ -127,13 +106,9 @@ func (c *Client) writePump() {
       if (handshake == nil) {
         continue
       }
-      w,_ := c.conn.NextWriter(websocket.TextMessage)
-      payload := map[string]interface{}{
-        "type":     "handshake",
-        "clientId": handshake.ClientId,
-      }
-      b, _ := json.Marshal(payload)
-      w.Write(b)
+      w,_ := c.conn.NextWriter(websocket.BinaryMessage)
+      protoBytes, _ := proto.Marshal(handshake)
+      w.Write(protoBytes)
       w.Close()
     }
   }
