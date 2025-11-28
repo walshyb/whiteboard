@@ -25,7 +25,7 @@ func (hub *Hub) run() {
     select {
     case client := <-hub.register: 
       hub.clients[client] = true
-      handshake := Handshake{
+      handshake := events.ServerMessage{
         ClientId: client.id,
       }
       hub.redis.Set(hub.ctx, client.id, client.name, 0).Err()

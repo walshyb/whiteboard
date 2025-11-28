@@ -1,17 +1,33 @@
 import { useEffect, useRef } from "react";
+import { ClientMessage, ServerMessage } from "./proto/generated/events";
 
-export function useWebSocket(handleOnMessage: Function) {
+export function useWebSocket(
+  handleOnMessage: Function,
+): [React.RefObject<WebSocket | null>, Function] {
   const wsRef: React.RefObject<WebSocket | null> = useRef(null);
   const reconnectTimeout: React.RefObject<number | null> = useRef(null);
   const initialized = useRef(false);
   const reconnectDelay = 2000; // start delay in ms
 
+  function sendWsMessage(message: ClientMessage) {
+    const encodedMessage = ClientMessage.encode(message).finish();
+    wsRef.current?.send(encodedMessage);
+  }
+
   const connect = () => {
     const socket = new WebSocket("ws://localhost:8080/ws");
+    socket.binaryType = "arraybuffer";
     wsRef.current = socket;
 
-    socket.onmessage = function (e) {
-      handleOnMessage(e);
+    socket.onmessage = function (e: MessageEvent) {
+      try {
+        const uint8Array = new Uint8Array(e.data as ArrayBuffer);
+        const serverMessage: ServerMessage = ServerMessage.decode(uint8Array);
+
+        handleOnMessage(serverMessage);
+      } catch (error: Error | unknown) {
+        console.error("Failed to decode Protobuf message", error);
+      }
     };
 
     socket.onerror = (err) => {
@@ -36,5 +52,5 @@ export function useWebSocket(handleOnMessage: Function) {
     };
   }, []);
 
-  return wsRef;
+  return [wsRef, sendWsMessage];
 }

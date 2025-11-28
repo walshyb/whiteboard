@@ -1,37 +1,53 @@
 import { useEffect, useRef, useState } from "react";
 import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
+import {
+  ClientMessage,
+  ServerMessage,
+  MouseEvent,
+} from "../proto/generated/events";
+
+interface ActiveClients {
+  [clientName: string]: {
+    x: number;
+    y: number;
+  };
+}
 
 export default function GraphCanvas() {
   const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
-  const clientId = useRef(null);
-  const [activeClients, setActiveClients] = useState({});
+  const clientId = useRef<string | null>(null);
+  const [activeClients, setActiveClients] = useState<ActiveClients>({});
   type Mode = "drag" | "ellipse" | "select" | "rectangle";
   const [mode, setMode] = useState<Mode>("drag");
 
-  const wsRef: React.RefObject<WebSocket | null> = useWebSocket((e: any) => {
-    const event: any = JSON.parse(e.data);
-    if (event.type === "handshake") {
-      clientId.current = event.clientId;
-      return;
-    }
+  const [wsRef, sendWsMessage] = useWebSocket(
+    (serverMessage: ServerMessage) => {
+      // Handshake
+      if (serverMessage.clientId) {
+        clientId.current = serverMessage.clientId;
+        return;
+      }
 
-    if (event.type === "mouseMove") {
-      const remoteClientName = event.clientName;
-      const { x, y } = event.data;
-      setActiveClients((prev) => ({
-        ...prev,
-        [remoteClientName]: { x, y },
-      }));
-    }
+      const mouseEvent = serverMessage.eventData?.mouseEvent;
+      if (mouseEvent) {
+        const remoteClientName = serverMessage.senderName;
+        const { x, y } = mouseEvent;
+        setActiveClients((prev) => ({
+          ...prev,
+          [remoteClientName]: { x, y },
+        }));
+      }
 
-    // Delete cursors of disconnected clients
-    if (event.type === "client_disconnect") {
-      const newActiveClients = { ...activeClients };
-      delete newActiveClients[event.clientName];
-      setActiveClients(newActiveClients);
-    }
-  });
+      // Delete cursors of disconnected clients
+      const disconnectedClientName = serverMessage.clientDisconnect?.clientName;
+      if (disconnectedClientName) {
+        const newActiveClients = { ...activeClients };
+        delete newActiveClients[disconnectedClientName];
+        setActiveClients(newActiveClients);
+      }
+    },
+  );
 
   const [viewport, setViewport] = useState({
     x: 0, // pan offset x
@@ -135,13 +151,17 @@ export default function GraphCanvas() {
     const wx = (e.clientX - viewport.x) / viewport.scale;
     const wy = (e.clientY - viewport.y) / viewport.scale;
 
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "mouseMove",
-        clientId: clientId.current,
-        data: { x: wx, y: wy },
-      }),
-    );
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      event: {
+        mouseEvent: {
+          x: wx,
+          y: wy,
+        },
+      },
+    };
+
+    sendWsMessage(clientMessage);
   }
 
   function onMouseUp() {
@@ -153,13 +173,17 @@ export default function GraphCanvas() {
       return;
     }
 
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "mouseMove",
-        clientId: clientId.current,
-        data: { x: -1, y: -1 },
-      }),
-    );
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      event: {
+        mouseEvent: {
+          x: -1,
+          y: -1,
+        },
+      },
+    };
+
+    sendWsMessage(clientMessage);
   }
 
   function resizeCanvas(canvas: HTMLCanvasElement) {

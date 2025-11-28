@@ -2,7 +2,6 @@ package main
 
 import (
   "log"
-  "encoding/json"
   "math/rand"
   "fmt"
   "net/http"
@@ -17,31 +16,9 @@ type Client struct {
   conn *websocket.Conn
   hub *Hub
   send chan *events.ServerMessage
-  handshake chan *Handshake 
+  handshake chan *events.ServerMessage
   name string
   id string
-}
-
-type Handshake struct {
-  ClientId string `json:"clientId"`
-}
-
-type InboundEvent struct {
-  ClientId string `json:"clientId"`
-  Data interface{} `json:"data,omitempty"` 
-  Type string `json:"type"`
-  ServerId string
-}
-
-type Coordinates struct {
-  X int `json:"x"`
-  Y int `json:"y"`
-}
-
-type OutboundEvent struct {
-  Data Coordinates `json:"data"` // should rename to payload
-  Type string `json:"type"`
-  ClientName string `json:"clientName"`
 }
 
 func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
@@ -58,7 +35,7 @@ func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
     conn: conn,
     hub: hub,
 		send: make(chan *events.ServerMessage),
-    handshake: make(chan *Handshake),
+    handshake: make(chan *events.ServerMessage),
     name: fmt.Sprintf("%s %s", random_adjective, random_noun),
     id: uuid.New().String(),
   }
@@ -118,8 +95,8 @@ func (c *Client) writePump() {
         continue
       }
 
-      jsonBytes, _ := json.Marshal(message)
-      err := c.conn.WriteMessage(websocket.TextMessage, jsonBytes)
+      protoBytes , _ := proto.Marshal(message)
+      err := c.conn.WriteMessage(websocket.BinaryMessage, protoBytes)
 
       if err != nil {
         log.Println("WriteMessage error:", err)
@@ -129,13 +106,9 @@ func (c *Client) writePump() {
       if (handshake == nil) {
         continue
       }
-      w,_ := c.conn.NextWriter(websocket.TextMessage)
-      payload := map[string]interface{}{
-        "type":     "handshake",
-        "clientId": handshake.ClientId,
-      }
-      b, _ := json.Marshal(payload)
-      w.Write(b)
+      w,_ := c.conn.NextWriter(websocket.BinaryMessage)
+      protoBytes, _ := proto.Marshal(handshake)
+      w.Write(protoBytes)
       w.Close()
     }
   }
