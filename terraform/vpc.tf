@@ -74,13 +74,13 @@ resource "aws_security_group" "app_sg" {
     cidr_blocks = [var.my_ssh_ip_cidr]
   }
 
-  # Allow HTTP/WS traffic from the internet
+  # Allow HTTP/WS ONLY from the Load Balancer's Security Group
   ingress {
-    description = "Allow App HTTP/WS"
-    from_port   = 80
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow HTTP/WS from ALB"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
   }
 
   # Allow all outbound traffic
@@ -107,6 +107,30 @@ resource "aws_security_group" "db_sg" {
   }
 
   # Rule: Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Security Group for the Application Load Balancer (ALB)
+resource "aws_security_group" "lb_sg" {
+  name        = "whiteboard-alb-sg"
+  description = "Allows HTTP/80 inbound from the Internet to the ALB"
+  vpc_id      = aws_vpc.main.id
+
+  # Inbound rule: Allow HTTP/80 from anywhere
+  ingress {
+    description = "Allow HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Outbound rule: Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
