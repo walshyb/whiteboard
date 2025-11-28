@@ -19,3 +19,9 @@ variable "aws_account_id" {
   description = "AWS Account ID for ECR authentication."
   type        = string
 }
+
+variable "public_key_path" {
+  description = "Path to the public key file"
+  type        = string
+  default     = "~/.ssh/aws_ec2_key.pub"
+}

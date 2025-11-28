@@ -1,6 +1,6 @@
 resource "aws_key_pair" "app_key" {
   key_name   = "whiteboard-app-key"
-  public_key = file("~/.ssh/aws_ec2_key.pub") 
+  public_key = file(var.public_key_path)
 }
 
 resource "aws_instance" "app_server" {
