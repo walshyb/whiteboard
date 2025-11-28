@@ -21,6 +21,19 @@ export default function GraphCanvas() {
   type Mode = "drag" | "ellipse" | "select" | "rectangle";
   const [mode, setMode] = useState<Mode>("drag");
 
+  useEffect(() => {
+    function onWindowResize() {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        resizeCanvas(canvas);
+      }
+    }
+    window.addEventListener("resize", onWindowResize);
+    return () => {
+      window.removeEventListener("resize", onWindowResize);
+    };
+  });
+
   const [wsRef, sendWsMessage] = useWebSocket(
     (serverMessage: ServerMessage) => {
       // Handshake
