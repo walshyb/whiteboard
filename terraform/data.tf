@@ -13,3 +13,7 @@ data "aws_ami" "amazon_linux_2" {
     values = ["arm64"] # required for t4g.micro
   }
 }
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}

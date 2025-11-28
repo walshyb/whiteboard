@@ -8,7 +8,7 @@ resource "aws_instance" "app_server" {
   instance_type   = var.instance_type             
   key_name        = aws_key_pair.app_key.key_name
   
-  subnet_id       = aws_subnet.public.id 
+  subnet_id       = aws_subnet.public_az_a.id 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   iam_instance_profile       = aws_iam_instance_profile.ecr_profile.name
 

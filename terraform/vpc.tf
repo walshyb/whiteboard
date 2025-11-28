@@ -18,14 +18,28 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# Public Subnet (For the App Server)
-resource "aws_subnet" "public" {
+# Need 2 subnets in different availability zones (AZ's) for ALB
+# Public Subnet A 
+resource "aws_subnet" "public_az_a" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24" 
-  map_public_ip_on_launch = true
+  availability_zone       = data.aws_availability_zones.available.names[0]
+  map_public_ip_on_launch = true 
 
   tags = {
-    Name = "Public-Subnet"
+    Name = "Public-Subnet-A"
+  }
+}
+
+# Public Subnet B
+resource "aws_subnet" "public_az_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = true 
+
+  tags = {
+    Name = "Public-Subnet-B"
   }
 }
 
@@ -33,6 +47,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.2.0/24"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
     Name = "Private-Subnet"
@@ -54,8 +69,13 @@ resource "aws_route_table" "public" {
 }
 
 # Associate the Public Subnet with the Public Route Table
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+resource "aws_route_table_association" "public_a" {
+  subnet_id      = aws_subnet.public_az_a.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_b" {
+  subnet_id      = aws_subnet.public_az_b.id
   route_table_id = aws_route_table.public.id
 }
 
