@@ -16,6 +16,7 @@ All in all, this project (thus far) has helped me learn more about: Golang, webs
 - make ^3.x
 - Redis
 - MongoDB
+- Terraform (for deployment configuration)
 
 ## Getting Started
 
@@ -45,7 +46,7 @@ cd client && npm run dev
 
 ## Full Local Development:
 
-### 2. Download and build dependencies
+### Download and build dependencies
 
 ```bash
 # Install Client deps
@@ -60,7 +61,7 @@ go mod download
 make
 ```
 
-### 3. Run the services
+### Run the services
 
 - Run Redis (system-dependent)
 - Run MongoDB (system-dependent)

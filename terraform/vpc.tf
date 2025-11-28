@@ -1,0 +1,116 @@
+# Create the VPC (private network container)
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16" 
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "Whiteboard-VPC"
+  }
+}
+
+# Internet Gateway allows traffic in and out of the VPC
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "Whiteboard-IGW"
+  }
+}
+
+# Public Subnet (For the App Server)
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24" 
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "Public-Subnet"
+  }
+}
+
+# Private Subnet (For the DB Server)
+resource "aws_subnet" "private" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.2.0/24"
+
+  tags = {
+    Name = "Private-Subnet"
+  }
+}
+
+# Public Route Table (routes traffic to the Internet Gateway)
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
+  tags = {
+    Name = "Public-Route-Table"
+  }
+}
+
+# Associate the Public Subnet with the Public Route Table
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+
+# Security Group for the App Server (Box 1)
+resource "aws_security_group" "app_sg" {
+  vpc_id = aws_vpc.main.id
+  name   = "app-server-sg"
+
+  # Allow SSH for administration
+  ingress {
+    description = "Allow SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ssh_ip_cidr]
+  }
+
+  # Allow HTTP/WS traffic from the internet
+  ingress {
+    description = "Allow App HTTP/WS"
+    from_port   = 80
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Security Group for the DB Server (Box 2)
+resource "aws_security_group" "db_sg" {
+  vpc_id = aws_vpc.main.id
+  name   = "db-server-sg"
+
+  # Allow Redis and Mongo only from the App Server's subnet
+  ingress {
+    description = "Allow DB Access from App Subnet"
+    from_port   = 0
+    to_port     = 65535 # All ports for simplicity
+    protocol    = "tcp"
+    cidr_blocks = [aws_subnet.public.cidr_block] # Only allows traffic from 10.0.1.0/24
+  }
+
+  # Rule: Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}

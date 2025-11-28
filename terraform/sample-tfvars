@@ -1,0 +1,5 @@
+# Public IP
+my_ssh_ip_cidr = "0.0.0.0/32"
+
+# AWS account id
+aws_account_id  = ""

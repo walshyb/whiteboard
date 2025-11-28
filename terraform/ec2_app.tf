@@ -1,0 +1,41 @@
+resource "aws_key_pair" "app_key" {
+  key_name   = "whiteboard-app-key"
+  public_key = file("~/.ssh/aws_ec2_key.pub") 
+}
+
+resource "aws_instance" "app_server" {
+  ami             = data.aws_ami.amazon_linux_2.id
+  instance_type   = var.instance_type             
+  key_name        = aws_key_pair.app_key.key_name
+  
+  subnet_id       = aws_subnet.public.id 
+  security_groups = [aws_security_group.app_sg.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+
+              sudo yum update -y
+              sudo yum install docker -y
+              sudo service docker start
+              sudo usermod -aG docker ec2-user
+
+              sudo $(aws ecr get-login-password --region ${var.region}) \
+                 | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com
+              
+              sudo docker run -d \
+                -p 80:8080 \
+                -e REDIS_HOST=${aws_instance.db_server.private_ip} \
+                -e MONGO_HOST=${aws_instance.db_server.private_ip} \
+                --name server \
+                ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/whiteboard:latest
+              EOF
+
+  tags = {
+    Name = "Whiteboard-Server"
+  }
+}
+
+output "app_server_public_ip" {
+  description = "The public IP address of the Application Server (Box 1)."
+  value       = aws_instance.app_server.public_ip
+}
