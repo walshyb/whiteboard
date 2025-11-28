@@ -21,14 +21,17 @@ resource "aws_instance" "db_server" {
               sudo usermod -aG docker ec2-user
 
               sudo docker run -d \
+                --restart unless-stopped \
                 -p 6379:6379 \
                 --name redis-c \
-                redis:latest
+                redis:6.2-alpine
               
               sudo docker run -d \
+                --restart unless-stopped \
+                -v /data/mongodb:/data/db \
                 -p 27017:27017 \
                 --name mongo-c \
-                mongo:latest
+                mongo:6.0
               EOF
 
   tags = {
