@@ -41,8 +41,3 @@ resource "aws_instance" "app_server" {
     Name = "Whiteboard-Server"
   }
 }
-
-output "app_server_public_ip" {
-  description = "The public IP address of the Application Server (Box 1)."
-  value       = aws_instance.app_server.public_ip
-}
