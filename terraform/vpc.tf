@@ -123,7 +123,7 @@ resource "aws_security_group" "db_sg" {
     from_port   = 0
     to_port     = 65535 # All ports for simplicity
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.public.cidr_block] # Only allows traffic from 10.0.1.0/24
+    cidr_blocks = [aws_subnet.public_az_a.cidr_block] # Only allows traffic from 10.0.1.0/24
   }
 
   # Rule: Allow all outbound traffic
