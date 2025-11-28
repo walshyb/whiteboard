@@ -28,7 +28,7 @@ export default function GraphCanvas() {
     return () => {
       window.removeEventListener("resize", onWindowResize);
     };
-  });
+  }, []);
 
   const [_wsRef, sendWsMessage] = useWebSocket(
     (serverMessage: ServerMessage) => {
