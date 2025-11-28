@@ -30,7 +30,7 @@ resource "aws_instance" "app_server" {
                  | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com
               
               sudo docker run -d \
-                -p 8080:8080 \
+                -p 80:8080 \
                 -e REDIS_HOST=${aws_instance.db_server.private_ip} \
                 -e MONGO_HOST=${aws_instance.db_server.private_ip} \
                 --name server \

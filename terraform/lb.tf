@@ -49,5 +49,5 @@ resource "aws_lb_listener" "http_listener" {
 resource "aws_lb_target_group_attachment" "app_server_attach" {
   target_group_arn = aws_lb_target_group.app_tg.arn
   target_id        = aws_instance.app_server.id
-  port             = 8080
+  port             = 80
 }
