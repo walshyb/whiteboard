@@ -4,7 +4,7 @@ resource "aws_instance" "db_server" {
   key_name        = aws_key_pair.app_key.key_name
   
   subnet_id       = aws_subnet.private.id 
-  security_groups = [aws_security_group.db_sg.id]
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
   iam_instance_profile = aws_iam_instance_profile.ecr_profile.name
 
   metadata_options {
