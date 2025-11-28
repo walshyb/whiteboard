@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@protobuf-ts/runtime": "^2.11.1",
+    "@types/google-protobuf": "^3.15.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tldraw": "^4.2.0"
+    "tldraw": "^4.2.0",
+    "ts-proto": "^2.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
