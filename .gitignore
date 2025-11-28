@@ -2,3 +2,4 @@
 .DS_Store
 *.pb.go
 client/src/proto/generated/*.ts
+vendor/
