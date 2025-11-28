@@ -11,7 +11,7 @@ GO_OUT_DIR := $(PROTO_DIR)
 CLIENT_OUT_DIR := client/src/proto/generated
 TS_PROTO_PLUGIN := client/node_modules/.bin/protoc-gen-ts_proto
 
-.PHONY: all proto clean
+.PHONY: all proto clean help
 
 all: proto
 
