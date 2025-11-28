@@ -30,7 +30,7 @@ export function useWebSocket(
       }
     };
 
-    socket.onerror = (err) => {
+    socket.onerror = (_: Error | unknown) => {
       //console.error("WS error", err);
       socket.close(); // trigger reconnect via onclose
     };
