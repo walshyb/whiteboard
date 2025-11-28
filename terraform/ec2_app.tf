@@ -11,6 +11,14 @@ resource "aws_instance" "app_server" {
   subnet_id       = aws_subnet.public.id 
   security_groups = [aws_security_group.app_sg.id]
 
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens = "required"
+    http_put_response_hop_limit = 1
+  }
+
+  monitoring = true
+
   user_data = <<-EOF
               #!/bin/bash
 
@@ -19,7 +27,7 @@ resource "aws_instance" "app_server" {
               sudo service docker start
               sudo usermod -aG docker ec2-user
 
-              sudo $(aws ecr get-login-password --region ${var.region}) \
+              aws ecr get-login-password --region ${var.region} \
                  | sudo docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com
               
               sudo docker run -d \

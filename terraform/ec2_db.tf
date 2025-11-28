@@ -7,6 +7,12 @@ resource "aws_instance" "db_server" {
   security_groups = [aws_security_group.db_sg.id]
   iam_instance_profile = aws_iam_instance_profile.ecr_profile.name
 
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens = "required"
+    http_put_response_hop_limit = 1
+  }
+
   user_data = <<-EOF
               #!/bin/bash
               sudo yum update -y
