@@ -34,7 +34,7 @@ proto_ts: $(PROTO_FILES)
 	@echo "Compiling TS Protobuf files"
 	protoc \
 		--plugin=$(TS_PROTO_PLUGIN) \
-    --ts_proto_opt=$(TS_OPTS) \
+		--ts_proto_opt=$(TS_OPTS) \
 		--ts_proto_out=$(CLIENT_OUT_DIR) \
 		$(PROTO_FILES)
 
@@ -46,7 +46,7 @@ proto_dev: $(PROTO_FILES)
 		--go_opt=$(GO_OPTS) \
 		\
 		--plugin=$(TS_PROTO_PLUGIN) \
-    --ts_proto_opt=$(TS_OPTS) \
+		--ts_proto_opt=$(TS_OPTS) \
 		--ts_proto_out=$(CLIENT_OUT_DIR) \
 		$(PROTO_FILES)
 
