@@ -25,7 +25,7 @@ func makeRedisClient() *redis.Client {
 }
 
 func makeMongoClient(ctx context.Context) *mongo.Client {
-	context, cancel := context.WithTimeout(ctx, 10*time.Second)
+	contextWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	const defaultMongoURI = "mongodb://localhost:27017/whiteboard" 
@@ -38,12 +38,14 @@ func makeMongoClient(ctx context.Context) *mongo.Client {
 	if err != nil {
 		//return nil, fmt.Errorf("mongo connect error: %w", err)
 		println("mongo connect error")
+		return nil
 	}
 
 	// Ping to verify we can actually reach the server
-	if err := client.Ping(context, nil); err != nil {
+	if err := client.Ping(contextWithTimeout, nil); err != nil {
 		//return nil, fmt.Errorf("mongo ping error: %w", err)
 		println("mongo ping error")
+		return nil
 	}
 
 	return client
