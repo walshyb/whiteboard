@@ -103,11 +103,12 @@ resource "aws_iam_policy" "ssm_send_command_policy" {
         Effect = "Allow"
         Action = "ssm:SendCommand"
         Resource = "arn:aws:ec2:${var.region}:${var.aws_account_id}:instance/${aws_instance.app_server.id}"
-        Condition = {
-          StringEquals = {
-            "ssm:resourceTag/Name" = "Whiteboard-Server"
-          }
-        }
+      },
+      {
+        Sid = "AllowSendCommandWithDocument"
+        Effect = "Allow"
+        Action = "ssm:SendCommand"
+        Resource = "arn:aws:ssm:${var.region}::document/AWS-RunShellScript"
       },
       {
         Sid = "AllowViewCommands"
