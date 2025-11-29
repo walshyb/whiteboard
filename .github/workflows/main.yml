@@ -50,6 +50,9 @@ jobs:
           IMAGE_URI=${{ steps.push-image.outputs.IMAGE_URI }}
           INSTANCE_ID=${{ secrets.AWS_INSTANCE_ID }}
 
+          # Extract the registry URL from IMAGE_URI
+          ECR_REGISTRY=$(echo $IMAGE_URI | cut -d'/' -f1)
+
           # Create the parameters JSON
           cat > deploy_params.json <<'EOF'
           {
@@ -61,7 +64,10 @@ jobs:
               "commands": [
                 "set -e",
                 "IMAGE_URI=\"IMAGE_URI_PLACEHOLDER\"",
+                "ECR_REGISTRY=\"ECR_REGISTRY_PLACEHOLDER\"",
+                "AWS_REGION=\"AWS_REGION_PLACEHOLDER\"",
                 "echo \"Starting deployment for $IMAGE_URI\"",
+                "aws ecr get-login-password --region \"\$AWS_REGION\" | sudo docker login --username AWS --password-stdin \"$ECR_REGISTRY\"",
                 "sudo docker pull \"$IMAGE_URI\"",
                 "sudo docker rm -f server || true",
                 "sudo docker run -d -p 8080:8080 -e ENV=\"production\" -e ALLOWED_ORGINS=\"https://bwal.sh,https://walshyb.github.io\" -e REDIS_HOST=\"REDIS_HOST_PLACEHOLDER\" -e MONGO_HOST=\"MONGO_HOST_PLACEHOLDER\" --name server \"$IMAGE_URI\"",
@@ -77,6 +83,8 @@ jobs:
           # Substitute variables
           sed -i "s|INSTANCE_ID_PLACEHOLDER|$INSTANCE_ID|g" deploy_params.json
           sed -i "s|IMAGE_URI_PLACEHOLDER|$IMAGE_URI|g" deploy_params.json
+          sed -i "s|AWS_REGION_PLACEHOLDER|${{ env.AWS_REGION }}|g" deploy_params.json
+          sed -i "s|ECR_REGISTRY_PLACEHOLDER|$ECR_REGISTRY|g" deploy_params.json
           sed -i "s|REDIS_HOST_PLACEHOLDER|${{ secrets.DB_SERVER_PRIVATE_IP }}|g" deploy_params.json
           sed -i "s|MONGO_HOST_PLACEHOLDER|${{ secrets.DB_SERVER_PRIVATE_IP }}|g" deploy_params.json
 
