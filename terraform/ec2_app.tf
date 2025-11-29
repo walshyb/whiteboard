@@ -33,7 +33,7 @@ resource "aws_instance" "app_server" {
                 -p 8080:8080 \
                 -e ENV=production \
                 -e REDIS_ADDR="${aws_instance.db_server.private_ip}:6379" \
-                -e MONGO_URI="mongodb://${aws_instance.db_server.private_ip}:27017" \
+                -e MONGO_URI="mongodb://${aws_instance.db_server.private_ip}:27017/whiteboard" \
                 --name server \
                 ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/whiteboard:latest
               EOF
