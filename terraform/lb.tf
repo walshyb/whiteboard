@@ -33,11 +33,20 @@ resource "aws_lb_target_group" "app_tg" {
   }
 }
 
-# Create a Listener (tell the ALB where to listen for traffic (the internet))
-resource "aws_lb_listener" "http_listener" {
+# Attach the App Server to the Target Group
+resource "aws_lb_target_group_attachment" "app_server_attach" {
+  target_group_arn = aws_lb_target_group.app_tg.arn
+  target_id        = aws_instance.app_server.id
+  port             = 8080
+}
+
+# add HTTPS listener
+resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
-  port              = 80
-  protocol          = "HTTP"
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = data.aws_acm_certificate.app_cert.arn
 
   default_action {
     type             = "forward"
@@ -45,9 +54,18 @@ resource "aws_lb_listener" "http_listener" {
   }
 }
 
-# Attach the App Server to the Target Group
-resource "aws_lb_target_group_attachment" "app_server_attach" {
-  target_group_arn = aws_lb_target_group.app_tg.arn
-  target_id        = aws_instance.app_server.id
-  port             = 8080
+# Redirect HTTP to HTTPS
+resource "aws_lb_listener" "http_listener" {
+  load_balancer_arn = aws_lb.app_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
 }
