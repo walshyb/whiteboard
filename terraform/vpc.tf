@@ -43,17 +43,6 @@ resource "aws_subnet" "public_az_b" {
   }
 }
 
-# Private Subnet (For the DB Server)
-resource "aws_subnet" "private" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
-
-  tags = {
-    Name = "Private-Subnet"
-  }
-}
-
 # Public Route Table (routes traffic to the Internet Gateway)
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id

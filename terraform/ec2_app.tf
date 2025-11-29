@@ -31,9 +31,9 @@ resource "aws_instance" "app_server" {
               
               sudo docker run -d \
                 -p 8080:8080 \
-                -e ENV=production
-                -e REDIS_HOST=${aws_instance.db_server.private_ip} \
-                -e MONGO_HOST=${aws_instance.db_server.private_ip} \
+                -e ENV=production \
+                -e REDIS_ADDR="${aws_instance.db_server.private_ip}:6379" \
+                -e MONGO_URI="mongodb://${aws_instance.db_server.private_ip}:27017" \
                 --name server \
                 ${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/whiteboard:latest
               EOF
