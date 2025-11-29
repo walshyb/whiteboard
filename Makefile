@@ -33,6 +33,7 @@ proto_go: $(PROTO_FILES)
 proto_ts: $(PROTO_FILES)
 	@echo "Compiling TS Protobuf files"
 	protoc \
+		--proto_path=$(PROTO_DIR) \
 		--plugin=$(TS_PROTO_PLUGIN) \
 		--ts_proto_opt=$(TS_OPTS) \
 		--ts_proto_out=$(CLIENT_OUT_DIR) \
