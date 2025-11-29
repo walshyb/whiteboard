@@ -46,31 +46,32 @@ jobs:
         run: |
           IMAGE_URI=${{ steps.push-image.outputs.IMAGE_URI }}
           INSTANCE_ID=${{ secrets.AWS_INSTANCE_ID }}
+          DB_SERVER_PRIVATE_IP=${{ secrets.DB_SERVER_PRIVATE_IP }}
 
-          # The shell command to run on the EC2 instance:
-          DEPLOY_COMMAND=$(cat <<EOF
-            echo 'Starting deployment for $IMAGE_URI';
-            sudo docker pull $IMAGE_URI;
-            sudo docker rm -f server || true;
-            sudo docker run -d \
-              -p 80:8080 \
-              -e REDIS_HOST=${{ secrets.DB_SERVER_PRIVATE_IP }} \
-              -e MONGO_HOST=${{ secrets.DB_SERVER_PRIVATE_IP }} \
-              --name server \
-              $IMAGE_URI;
-            echo 'Deployment complete.';
-          EOF
-          )
-
-          ENCODED_SCRIPT=$(echo "$DEPLOY_COMMAND" | base64 | tr -d '\n')
-
-          cat > deploy_params.json <<EOF_JSON
+          cat > deploy_params.json <<'EOF'
           {
-            "commands": ["$ENCODED_SCRIPT"],
+            "commands": [
+              "set -e",
+              "IMAGE_URI=\"$IMAGE_URI\"",
+              "echo \"Starting deployment for $IMAGE_URI\"",
+              "sudo docker pull \"$IMAGE_URI\"",
+              "sudo docker rm -f server || true",
+              "sudo docker run -d \\",
+              "  -p 80:8080 \\",
+              "  -e REDIS_HOST=\"$REDIS_HOST\" \\",
+              "  -e MONGO_HOST=\"$MONGO_HOST\" \\",
+              "  --name server \\",
+              "  \"$IMAGE_URI\"",
+              "echo 'Deployment complete.'"
+            ],
             "executionTimeout": ["3600"],
             "cloudWatchOutputEnabled": ["true"]
           }
-          EOF_JSON
+          EOF
+
+          sed -i "s|\$IMAGE_URI|$IMAGE_URI|g" deploy_params.json
+          sed -i "s|\$REDIS_HOST|${{ secrets.DB_SERVER_PRIVATE_IP }}|g" deploy_params.json
+          sed -i "s|\$MONGO_HOST|${{ secrets.DB_SERVER_PRIVATE_IP }}|g" deploy_params.json
 
           # Send the command to the EC2 instance via SSM
           aws ssm send-command \
