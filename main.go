@@ -1,11 +1,13 @@
 package main
 
 import (
+	"os"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 	"context"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	events "github.com/walshyb/whiteboard/proto"
