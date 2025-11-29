@@ -19,7 +19,25 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true;
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return false
+		}
+		
+		// Read from environment variable, default to localhost for dev
+		allowedOriginsEnv := os.Getenv("ALLOWED_ORIGINS")
+		currentEnv := os.Getenv("ENV")
+		if currentEnv != "production" && allowedOriginsEnv == "" {
+			allowedOriginsEnv = "http://localhost:5173,http://localhost:3000"
+		}
+		
+		allowedOrigins := strings.Split(allowedOriginsEnv, ",")
+		for _, allowed := range allowedOrigins {
+			if origin == strings.TrimSpace(allowed) {
+				return true
+			}
+		}
+		return false
 	},
 }
 
