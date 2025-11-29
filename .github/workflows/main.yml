@@ -1,0 +1,110 @@
+name: CI/CD - Build, Push, and Deploy ECR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: whiteboard
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push Image to ECR
+        id: push-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
+        run: |
+          FULL_IMAGE_NAME=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $FULL_IMAGE_NAME .
+          docker push $FULL_IMAGE_NAME
+          echo "IMAGE_URI=$FULL_IMAGE_NAME" >> $GITHUB_OUTPUT # Store URI for deployment
+
+      - name: Deploy New Image via SSM
+        env:
+          DB_PRIVATE_IP: ${{ secrets.DB_SERVER_PRIVATE_IP }}
+        run: |
+          IMAGE_URI=${{ steps.push-image.outputs.IMAGE_URI }}
+          INSTANCE_ID=${{ secrets.AWS_INSTANCE_ID }}
+
+          # The shell command to run on the EC2 instance:
+          DEPLOY_COMMAND="
+            echo 'Starting deployment for $IMAGE_URI';
+            sudo docker pull $IMAGE_URI;
+            sudo docker rm -f server || true;
+            sudo docker run -d \
+              -p 80:8080 \
+              -e REDIS_HOST=$DB_PRIVATE_IP \
+              -e MONGO_HOST=$DB_PRIVATE_IP \
+              --name server \
+              $IMAGE_URI;
+            echo 'Deployment complete.';
+          "
+          # Send the command to the EC2 instance via SSM
+          aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters commands="$DEPLOY_COMMAND" \
+            --comment "Automated deployment from GitHub Actions" \
+            --region ${{ env.AWS_REGION }}
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Protoc
+        uses: sheng/setup-protoc@v1
+        with:
+          version: 3.20.1
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "25.2"
+
+      - name: Setup Tools and Build Frontend
+        run: |
+          echo "Starting frontend build process..."
+
+          # 1. Install Dependencies (Runs inside /client)
+          cd client
+          echo "Installing NPM dependencies (including TypeScript compiler) in client/"
+          npm install 
+
+          # 2. Generate Protobufs (Runs inside /)
+          cd .. # Go back to root
+          echo "Running 'make' command in root folder to generate Protobufs..."
+          make 
+
+          # 3. Build Frontend (Runs inside /client)
+          cd client
+          echo "Running 'npm run build' command..."
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: client/dist
+          branch: gh-pages
