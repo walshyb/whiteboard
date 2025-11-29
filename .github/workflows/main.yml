@@ -41,7 +41,8 @@ jobs:
           IMAGE_TAG: latest
         run: |
           FULL_IMAGE_NAME=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker buildx build --platform linux/arm64 -t $FULL_IMAGE_NAME --push .
+          docker buildx build --platform linux/arm64 -t $FULL_IMAGE_NAME --load .
+          docker push $FULL_IMAGE_NAME
           echo "IMAGE_URI=$FULL_IMAGE_NAME" >> $GITHUB_OUTPUT # Store URI for deployment
 
       - name: Deploy New Image via SSM
