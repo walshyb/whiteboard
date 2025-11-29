@@ -82,6 +82,12 @@ func main() {
 		wsHandler(hub, w, r)
 	})
 
+	http.HandleFunc("/health", func (w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	fmt.Println("WebSocket server started on :8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
