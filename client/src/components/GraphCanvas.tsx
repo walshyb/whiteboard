@@ -14,8 +14,8 @@ export default function GraphCanvas() {
   const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
   const clientId = useRef<string | null>(null);
   const [activeClients, setActiveClients] = useState<ActiveClients>({});
-  type Mode = "drag" | "ellipse" | "select" | "rectangle";
-  const [mode, setMode] = useState<Mode>("drag");
+  //type Mode = "drag" | "ellipse" | "select" | "rectangle";
+  //const [mode, setMode] = useState<Mode>("drag");
 
   useEffect(() => {
     function onWindowResize() {
