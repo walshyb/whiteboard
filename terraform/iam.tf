@@ -91,6 +91,43 @@ resource "aws_iam_group_policy_attachment" "ci_ecr_attach" {
   policy_arn = aws_iam_policy.ecr_push_policy.arn
 }
 
+resource "aws_iam_policy" "ssm_send_command_policy" {
+  name        = "SSM-SendCommand-AppServer-Policy"
+  description = "Allows CI/CD user to send deployment commands via SSM"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "AllowSendCommand"
+        Effect = "Allow"
+        Action = "ssm:SendCommand"
+        Resource = "arn:aws:ec2:${var.region}:${var.aws_account_id}:instance/${aws_instance.app_server.id}"
+        Condition = {
+          StringEquals = {
+            "ssm:resourceTag/Name" = "Whiteboard-Server"
+          }
+        }
+      },
+      {
+        Sid = "AllowViewCommands"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetCommandInvocation",
+          "ssm:ListCommands",
+          "ssm:ListCommandInvocations"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_group_policy_attachment" "ci_ssm_attach" {
+  group      = aws_iam_group.ci_group.name
+  policy_arn = aws_iam_policy.ssm_send_command_policy.arn
+}
+
 # Attach the required policy for the EC2 instance to be managed by SSM
 resource "aws_iam_role_policy_attachment" "ssm_core" {
   role       = aws_iam_role.ec2_ecr_role.name
