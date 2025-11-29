@@ -59,7 +59,7 @@ jobs:
           EOF
           )
 
-          ENCODED_SCRIPT=$(echo "$DEPLOY_COMMAND" | base64)
+          ENCODED_SCRIPT=$(echo "$DEPLOY_COMMAND" | base64 | tr -d '\n')
 
           # Send the command to the EC2 instance via SSM
           aws ssm send-command \
