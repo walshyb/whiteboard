@@ -90,3 +90,9 @@ resource "aws_iam_group_policy_attachment" "ci_ecr_attach" {
   group      = aws_iam_group.ci_group.name
   policy_arn = aws_iam_policy.ecr_push_policy.arn
 }
+
+# Attach the required policy for the EC2 instance to be managed by SSM
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.ec2_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}

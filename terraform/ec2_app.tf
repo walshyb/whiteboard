@@ -41,3 +41,8 @@ resource "aws_instance" "app_server" {
     Name = "Whiteboard-Server"
   }
 }
+
+output "app_server_instance_id" {
+  description = "The Instance ID of the Application Server (Required for SSM)."
+  value       = aws_instance.app_server.id
+}
