@@ -64,12 +64,19 @@ jobs:
 
           ENCODED_SCRIPT=$(echo "$DEPLOY_COMMAND" | base64 | tr -d '\n')
 
+          cat > deploy_params.json <<EOF_JSON
+          {
+            "commands": ["$ENCODED_SCRIPT"],
+            "executionTimeout": ["3600"],
+            "cloudWatchOutputEnabled": ["true"]
+          }
+          EOF_JSON
+
           # Send the command to the EC2 instance via SSM
           aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
-            --parameters '{"commands": ["'"$ENCODED_SCRIPT"'"], "executionTimeout": ["3600"], "cloudWatchOutputEnabled": ["true"]}' \
-            --cli-input-json file:///dev/stdin
+            --cli-input-json file://deploy_params.json \
             --comment "Automated deployment from GitHub Actions" \
             --region ${{ env.AWS_REGION }}
 
