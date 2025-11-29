@@ -1,4 +1,4 @@
-name: CI/CD - Build, Push, and Deploy ECR
+name: CI/CD - Build, Push, and Deploy ECR; Build and Deploy FE
 
 on:
   push:
@@ -49,7 +49,6 @@ jobs:
         run: |
           IMAGE_URI=${{ steps.push-image.outputs.IMAGE_URI }}
           INSTANCE_ID=${{ secrets.AWS_INSTANCE_ID }}
-          DB_SERVER_PRIVATE_IP=${{ secrets.DB_SERVER_PRIVATE_IP }}
 
           # Create the parameters JSON
           cat > deploy_params.json <<'EOF'
