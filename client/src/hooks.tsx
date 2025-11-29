@@ -15,7 +15,8 @@ export function useWebSocket(
   }
 
   const connect = () => {
-    const socket = new WebSocket("ws://localhost:8080/ws");
+    const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+    const socket = new WebSocket(WS_URL + "/ws");
     socket.binaryType = "arraybuffer";
     wsRef.current = socket;
 

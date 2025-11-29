@@ -101,6 +101,8 @@ jobs:
           node-version: "25.2"
 
       - name: Setup Tools and Build Frontend
+        env:
+          VITE_WS_URL: ${{ secrets.API_URL }}
         run: |
           echo "Starting frontend build process..."
 
