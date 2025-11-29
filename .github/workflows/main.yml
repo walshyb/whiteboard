@@ -64,7 +64,7 @@ jobs:
                 "echo \"Starting deployment for $IMAGE_URI\"",
                 "sudo docker pull \"$IMAGE_URI\"",
                 "sudo docker rm -f server || true",
-                "sudo docker run -d -p 8080:8080 -e ENV=\"production\" -e \"https://bwal.sh,https://walshyb.github.io\" -e REDIS_HOST=\"REDIS_HOST_PLACEHOLDER\" -e MONGO_HOST=\"MONGO_HOST_PLACEHOLDER\" --name server \"$IMAGE_URI\"",
+                "sudo docker run -d -p 8080:8080 -e ENV=\"production\" -e ALLOWED_ORGINS=\"https://bwal.sh,https://walshyb.github.io\" -e REDIS_HOST=\"REDIS_HOST_PLACEHOLDER\" -e MONGO_HOST=\"MONGO_HOST_PLACEHOLDER\" --name server \"$IMAGE_URI\"",
                 "echo 'Deployment complete.'"
               ]
             },
