@@ -17,7 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. Configuration and Login (Identical to before)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -29,7 +28,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 2. Build, Tag, and Push (Identical to before)
       - name: Build, Tag, and Push Image to ECR
         id: push-image
         env:
@@ -70,3 +68,44 @@ jobs:
             --parameters commands="$DEPLOY_COMMAND" \
             --comment "Automated deployment from GitHub Actions" \
             --region ${{ env.AWS_REGION }}
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Protoc
+        uses: sheng/setup-protoc@v1
+        with:
+          version: 3.20.1
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "25.2"
+
+      - name: Setup Tools and Build Frontend
+        run: |
+          echo "Starting frontend build process..."
+
+          # 1. Install Dependencies (Runs inside /client)
+          cd client
+          echo "Installing NPM dependencies (including TypeScript compiler) in client/"
+          npm install 
+
+          # 2. Generate Protobufs (Runs inside /)
+          cd .. # Go back to root
+          echo "Running 'make' command in root folder to generate Protobufs..."
+          make 
+
+          # 3. Build Frontend (Runs inside /client)
+          cd client
+          echo "Running 'npm run build' command..."
+          npm run build
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: client/build
+          branch: gh-pages
