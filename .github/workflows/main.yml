@@ -12,7 +12,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+\
     permissions:
       contents: write
 
@@ -66,11 +66,11 @@ jobs:
                 "IMAGE_URI=\"IMAGE_URI_PLACEHOLDER\"",
                 "ECR_REGISTRY=\"ECR_REGISTRY_PLACEHOLDER\"",
                 "AWS_REGION=\"AWS_REGION_PLACEHOLDER\"",
-                "echo \"Starting deployment for \$IMAGE_URI\"",
-                "aws ecr get-login-password --region \"\$AWS_REGION\" | sudo docker login --username AWS --password-stdin \"\$ECR_REGISTRY\"",
-                "sudo docker pull \"\$IMAGE_URI\"",
+                "echo \"Starting deployment for $IMAGE_URI\"",
+                "aws ecr get-login-password --region \"$AWS_REGION\" | sudo docker login --username AWS --password-stdin \"$ECR_REGISTRY\"",
+                "sudo docker pull \"$IMAGE_URI\"",
                 "sudo docker rm -f server || true",
-                "sudo docker run -d -p 8080:8080 -e ENV=\"production\" -e ALLOWED_ORGINS=\"https://bwal.sh,https://walshyb.github.io\" -e REDIS_HOST=\"REDIS_HOST_PLACEHOLDER\" -e MONGO_HOST=\"MONGO_HOST_PLACEHOLDER\" --name server \"\$IMAGE_URI\"",
+                "sudo docker run -d -p 8080:8080 -e ENV=\"production\" -e ALLOWED_ORGINS=\"https://bwal.sh,https://walshyb.github.io\" -e REDIS_HOST=\"REDIS_HOST_PLACEHOLDER\" -e MONGO_HOST=\"MONGO_HOST_PLACEHOLDER\" --name server \"$IMAGE_URI\"",
                 "echo 'Deployment complete.'"
               ]
             },
