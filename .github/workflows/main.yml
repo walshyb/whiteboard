@@ -96,7 +96,7 @@ jobs:
           # 2. Generate Protobufs (Runs inside /)
           cd .. # Go back to root
           echo "Running 'make' command in root folder to generate Protobufs..."
-          make 
+          make proto_ts
 
           # 3. Build Frontend (Runs inside /client)
           cd client
