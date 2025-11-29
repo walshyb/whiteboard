@@ -31,6 +31,7 @@ resource "aws_instance" "app_server" {
               
               sudo docker run -d \
                 -p 8080:8080 \
+                -e ENV=production
                 -e REDIS_HOST=${aws_instance.db_server.private_ip} \
                 -e MONGO_HOST=${aws_instance.db_server.private_ip} \
                 --name server \
