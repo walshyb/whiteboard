@@ -5,7 +5,6 @@ import (
   "context"
 
   "github.com/redis/go-redis/v9"
-  "github.com/google/uuid"
   "go.mongodb.org/mongo-driver/v2/mongo"
 	"google.golang.org/protobuf/proto"
 	 events "github.com/walshyb/whiteboard/proto"
@@ -88,13 +87,10 @@ func (hub *Hub) run() {
 							Data: shape,
 						},
 					}
-					break
 				case *events.ClientMessage_MouseEvent:
 					serverMessage.EventType = &events.ServerMessage_MouseEvent {
 						MouseEvent: clientMessage.GetMouseEvent(),
 					}
-					break
-					
 				default:
 			}
 
