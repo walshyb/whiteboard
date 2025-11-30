@@ -8,14 +8,19 @@ import (
 	"time"
 	"context"
 	"strings"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
 	events "github.com/walshyb/whiteboard/proto"
 )
 
-var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
-var nouns = [8]string{"river","lantern","stone", "meadow","circuit","anchor","window","compass",}
 var serverName = strconv.FormatInt(time.Now().UnixNano(), 10)
+
+// Read from environment variable, default to localhost for dev
+var allowedOriginsEnv = os.Getenv("ALLOWED_ORIGINS")
+var currentEnv = os.Getenv("ENV")
+
+var allowedOrigins []string
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -25,15 +30,7 @@ var upgrader = websocket.Upgrader{
 		if origin == "" {
 			return false
 		}
-		
-		// Read from environment variable, default to localhost for dev
-		allowedOriginsEnv := os.Getenv("ALLOWED_ORIGINS")
-		currentEnv := os.Getenv("ENV")
-		if currentEnv != "production" && allowedOriginsEnv == "" {
-			allowedOriginsEnv = "http://localhost:5173,http://localhost:3000"
-		}
-		
-		allowedOrigins := strings.Split(allowedOriginsEnv, ",")
+
 		for _, allowed := range allowedOrigins {
 			if origin == strings.TrimSpace(allowed) {
 				return true
@@ -66,6 +63,12 @@ func main() {
 	ctx := context.Background()
 	mongo := makeMongoClient(ctx)
 
+	if currentEnv != "production" && allowedOriginsEnv == "" {
+		allowedOriginsEnv = "http://localhost:5173,http://localhost:3000"
+	}
+
+	allowedOrigins = strings.Split(allowedOriginsEnv, ",")
+
 	hub := &Hub {
 		clients: make(map[*Client]bool),
 		register: make(chan *Client),
@@ -82,6 +85,46 @@ func main() {
 
 	http.HandleFunc("/ws", func (w http.ResponseWriter, r *http.Request) {
 		wsHandler(hub, w, r)
+	})
+
+	http.HandleFunc("/board", func (w http.ResponseWriter, r *http.Request) {
+		// TODO: allow OPTIONS, GET method
+		origin := r.Header.Get("Origin")
+		isAllowed := false
+		// TODO: create helper
+    for _, allowedOrigin := range allowedOrigins {
+        if origin == allowedOrigin {
+            isAllowed = true
+            break
+        }
+    }
+
+		if (isAllowed) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		// Call your GetBoard function
+		board, err := hub.GetBoard()
+		if err != nil {
+			// If something went wrong, return 500
+			// TODO: one day switch to proper logs
+			println("GetBoard error: %v", err)
+			http.Error(w, "failed to retrieve board", http.StatusInternalServerError)
+			return
+		}
+
+		// Marshal the board to JSON
+		jsonData, err := json.Marshal(board)
+		if err != nil {
+			println("JSON marshal error: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// Write the JSON response
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonData)
 	})
 
 	http.HandleFunc("/health", func (w http.ResponseWriter, r *http.Request) {

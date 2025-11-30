@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
 import { ClientMessage, ServerMessage } from "./proto/generated/events";
+import { WS_URL } from "./helpers";
 
 export function useWebSocket(
   handleOnMessage: Function,
+  dependencies: Array<any>,
 ): [React.RefObject<WebSocket | null>, Function] {
   const wsRef: React.RefObject<WebSocket | null> = useRef(null);
   const reconnectTimeout: React.RefObject<number | null> = useRef(null);
@@ -15,7 +17,6 @@ export function useWebSocket(
   }
 
   const connect = () => {
-    const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
     const socket = new WebSocket(WS_URL + "/ws");
     socket.binaryType = "arraybuffer";
     wsRef.current = socket;
@@ -51,7 +52,7 @@ export function useWebSocket(
       if (wsRef.current) wsRef.current.close();
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
     };
-  }, []);
+  }, dependencies);
 
   return [wsRef, sendWsMessage];
 }

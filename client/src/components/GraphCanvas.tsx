@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
-import { ClientMessage, ServerMessage } from "../proto/generated/events";
+import {
+  ClientMessage,
+  ServerMessage,
+  Shape,
+  ShapeType,
+  AddShapeEvent,
+  Board,
+} from "../proto/generated/events";
+import { drawEllipse, drawRect } from "../graphics";
+import { API_URL } from "../helpers";
 
 interface ActiveClients {
   [clientName: string]: {
@@ -14,8 +23,10 @@ export default function GraphCanvas() {
   const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
   const clientId = useRef<string | null>(null);
   const [activeClients, setActiveClients] = useState<ActiveClients>({});
-  //type Mode = "drag" | "ellipse" | "select" | "rectangle";
-  //const [mode, setMode] = useState<Mode>("drag");
+  type Mode = "drag" | "ellipse" | "select" | "rectangle";
+  const [mode, _] = useState<Mode>("rectangle");
+  const shapes = useRef<Shape[]>([]);
+  const [boardFetched, setBoardFetched] = useState(false);
 
   useEffect(() => {
     function onWindowResize() {
@@ -25,6 +36,25 @@ export default function GraphCanvas() {
       }
     }
     window.addEventListener("resize", onWindowResize);
+
+    (async function () {
+      try {
+        const result = await fetch(API_URL + "/board");
+        if (!result.ok) {
+          console.error("Failed to fetch board:", result.status);
+          return;
+        }
+        const board: Board = await result.json();
+        if (board && board.shapes) {
+          shapes.current = board.shapes;
+        }
+      } catch (err) {
+        console.error("Error fetching board:", err);
+      } finally {
+        setBoardFetched(true);
+      }
+    })();
+
     return () => {
       window.removeEventListener("resize", onWindowResize);
     };
@@ -38,7 +68,7 @@ export default function GraphCanvas() {
         return;
       }
 
-      const mouseEvent = serverMessage.eventData?.mouseEvent;
+      const mouseEvent = serverMessage.mouseEvent;
       if (mouseEvent && serverMessage.senderName) {
         const remoteClientName = serverMessage.senderName;
         const { x, y } = mouseEvent;
@@ -58,6 +88,7 @@ export default function GraphCanvas() {
         });
       }
     },
+    [boardFetched],
   );
 
   const [viewport, setViewport] = useState({
@@ -114,6 +145,18 @@ export default function GraphCanvas() {
         }
       }
 
+      for (const shape of shapes.current) {
+        switch (shape.type) {
+          case ShapeType.RECTANGLE:
+            drawRect(ctx, shape);
+            break;
+
+          case ShapeType.ELLIPSE:
+            drawEllipse(ctx, shape);
+            break;
+        }
+      }
+
       ctx.restore();
 
       raf = requestAnimationFrame(draw);
@@ -127,8 +170,7 @@ export default function GraphCanvas() {
   }, [viewport]);
 
   // Panning
-  function onMouseDown(e: MouseEvent | any) {
-    console.log("click");
+  function onMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
   }
@@ -164,33 +206,67 @@ export default function GraphCanvas() {
 
     const clientMessage: ClientMessage = {
       clientId: clientId.current,
-      event: {
-        mouseEvent: {
-          x: wx,
-          y: wy,
-        },
+      mouseEvent: {
+        x: wx,
+        y: wy,
       },
     };
 
     sendWsMessage(clientMessage);
   }
 
-  function onMouseUp() {
+  function onMouseUp(event: React.MouseEvent<HTMLCanvasElement>) {
     dragging.current = false;
+
+    function getRandomHexColor() {
+      const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+      return `#${randomColor.padStart(6, "0")}`; // Pads with leading zeros if needed
+    }
+
+    // World coordinates
+    const wx = (event.clientX - viewport.x) / viewport.scale;
+    const wy = (event.clientY - viewport.y) / viewport.scale;
+
+    let newShape: Shape | null = null;
+
+    if (mode == "rectangle") {
+      newShape = {
+        type: ShapeType.RECTANGLE,
+        width: 100,
+        height: 100,
+        color: getRandomHexColor(),
+        x: wx,
+        y: wy,
+      } as Shape;
+      shapes.current.push(newShape);
+    }
+
+    if (!clientId.current || !newShape) {
+      return;
+    }
+
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      addShape: {
+        data: newShape,
+        shapeType: newShape.type,
+      } as AddShapeEvent,
+    };
+    sendWsMessage(clientMessage);
   }
 
   function onMouseLeave() {
+    dragging.current = false;
+
     if (!clientId.current) {
       return;
     }
 
     const clientMessage: ClientMessage = {
       clientId: clientId.current,
-      event: {
-        mouseEvent: {
-          x: -1,
-          y: -1,
-        },
+      mouseEvent: {
+        x: -1,
+        y: -1,
       },
     };
 

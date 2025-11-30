@@ -21,6 +21,9 @@ type Client struct {
   id string
 }
 
+var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
+var nouns = [8]string{"river","lantern","stone", "meadow","circuit","anchor","window","compass",}
+
 func makeNewClient(hub *Hub, w http.ResponseWriter, r *http.Request) *Client{
   conn, err := upgrader.Upgrade(w, r, nil)
   if err != nil {
@@ -67,7 +70,7 @@ func (c *Client) readPump() {
     // assign server ID
     msg.ServerId = &c.hub.serverId
 
-    // marshal it back to JSON
+		// re marshall
     protoBytes, err := proto.Marshal(&msg)
     if err != nil {
       log.Printf("marshal error: %v", err)

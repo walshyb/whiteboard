@@ -3,13 +3,14 @@ package main
 import (
   "log"
   "context"
+
   "github.com/redis/go-redis/v9"
   "go.mongodb.org/mongo-driver/v2/mongo"
 	"google.golang.org/protobuf/proto"
 	 events "github.com/walshyb/whiteboard/proto"
 )
 
-type Hub struct{
+type Hub struct {
   clients map[*Client]bool
   register chan *Client
   unregister chan *Client
@@ -43,7 +44,7 @@ func (hub *Hub) run() {
         }
 
         payload := events.ServerMessage{
-					NotificationType: &events.ServerMessage_ClientDisconnect {
+					EventType: &events.ServerMessage_ClientDisconnect {
 						ClientDisconnect: &events.ClientDisconnectEvent{
 							ClientName: client.name,
 						},
@@ -65,7 +66,6 @@ func (hub *Hub) run() {
       }
 
       clientName, err := hub.redis.Get(hub.ctx, clientMessage.ClientId).Result()
-
       if err != nil {
         println("error getting client ID from redis")
 				continue
@@ -73,10 +73,39 @@ func (hub *Hub) run() {
 
       serverMessage := &events.ServerMessage{
 				SenderName: clientName,
-				NotificationType: &events.ServerMessage_EventData {
-					EventData: clientMessage.GetEvent(),
-				},
       }
+
+			if clientMessage.ServerId == nil {
+				log.Println("ClientMessage missing ServerId")
+				continue
+			}
+			serverId := *clientMessage.ServerId
+
+			switch event := clientMessage.GetEventType().(type) {
+				case *events.ClientMessage_AddShape:
+					// Only write to mongo db if server ID of message sender is same as current
+					if serverId != hub.serverId {
+						continue
+					}
+
+					addEvent := event.AddShape
+					shape, err := AddShape(hub, addEvent.Data)
+					if err != nil {
+						println("error adding shape", err)
+						continue
+					}
+					serverMessage.EventType = &events.ServerMessage_AddShape{
+						AddShape: &events.AddShapeEvent{
+							Data: shape,
+						},
+					}
+				case *events.ClientMessage_MouseEvent:
+					serverMessage.EventType = &events.ServerMessage_MouseEvent {
+						MouseEvent: clientMessage.GetMouseEvent(),
+					}
+				default:
+					continue
+			}
 
       for client := range hub.clients {
         if client.id == clientMessage.GetClientId() {
