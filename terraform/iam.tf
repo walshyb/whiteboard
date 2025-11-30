@@ -68,7 +68,8 @@ resource "aws_iam_policy" "ecr_push_policy" {
           "ecr:InitiateLayerUpload",
           "ecr:BatchCheckLayerAvailability",
           "ecr:PutImage",
-          "ecr:GetAuthorizationToken",
+          "ecr:BatchGetImage",          # Required for Buildx cache checks
+          "ecr:GetDownloadUrlForLayer"  # Required for pulling cached layers
         ]
         # Restrict this policy to ONLY the whiteboard repository ARN
         Resource = [
