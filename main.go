@@ -32,6 +32,8 @@ var upgrader = websocket.Upgrader{
 		if currentEnv != "production" && allowedOriginsEnv == "" {
 			allowedOriginsEnv = "http://localhost:5173,http://localhost:3000"
 		}
+
+		// TODO: evaluate allowedOrigins once
 		
 		allowedOrigins := strings.Split(allowedOriginsEnv, ",")
 		for _, allowed := range allowedOrigins {
