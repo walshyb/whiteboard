@@ -106,14 +106,17 @@ func main() {
 		board, err := hub.GetBoard()
 		if err != nil {
 			// If something went wrong, return 500
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			// TODO: one day switch to proper logs
+			println("GetBoard error: %v", err)
+			http.Error(w, "failed to retrieve board", http.StatusInternalServerError)
 			return
 		}
 
 		// Marshal the board to JSON
 		jsonData, err := json.Marshal(board)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			println("JSON marshal error: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 

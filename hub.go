@@ -104,6 +104,7 @@ func (hub *Hub) run() {
 						MouseEvent: clientMessage.GetMouseEvent(),
 					}
 				default:
+					continue
 			}
 
       for client := range hub.clients {
