@@ -85,7 +85,6 @@ func (hub *Hub) run() {
 				case *events.ClientMessage_AddShape:
 					// Only write to mongo db if server ID of message sender is same as current
 					if serverId != hub.serverId {
-						print("server IDs don't match", serverId, &hub.serverId)
 						continue
 					}
 
