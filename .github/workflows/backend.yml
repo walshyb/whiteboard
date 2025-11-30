@@ -1,9 +1,16 @@
-name: CI/CD - Build, Push, and Deploy ECR; Build and Deploy FE
+name: Build, Push, and Deploy BE
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "Dockerfile"
+      - "proto/**"
+      - ".github/workflows/backend.yml"
 
 env:
   AWS_REGION: us-east-1
@@ -86,51 +93,3 @@ jobs:
           aws ssm send-command \
             --cli-input-json file://deploy_params.json \
             --region ${{ env.AWS_REGION }}
-
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v2
-        with:
-          version: "25.2"
-
-      - name: Set up Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: "25.2"
-          cache: "npm"
-          cache-dependency-path: client/package-lock.json
-
-      - name: Setup Tools and Build Frontend
-        env:
-          VITE_WS_URL: ${{ secrets.API_URL }}
-        run: |
-          echo "Starting frontend build process..."
-
-          # 1. Install Dependencies (Runs inside /client)
-          cd client
-          echo "Installing NPM dependencies (including TypeScript compiler) in client/"
-          npm ci
-
-          # 2. Generate Protobufs (Runs inside /)
-          cd .. # Go back to root
-          echo "Running 'make' command in root folder to generate Protobufs..."
-          make proto_ts
-
-          # 3. Build Frontend (Runs inside /client)
-          cd client
-          echo "Running 'npm run build' command..."
-          npm run build
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: client/dist
-          branch: gh-pages
