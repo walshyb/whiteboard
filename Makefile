@@ -13,7 +13,7 @@ CLIENT_OUT_DIR := client/src/proto/generated
 TS_PROTO_PLUGIN := client/node_modules/.bin/protoc-gen-ts_proto
 TS_OPTS := esModuleInterop=true,forceLong=string,outputServices=false
 
-.PHONY: all proto_go proto_dev proto_ts clean help
+.PHONY: all proto_go dev proto_ts clean
 
 all: proto_dev
 
@@ -39,7 +39,7 @@ proto_ts: $(PROTO_FILES)
 		--ts_proto_out=$(CLIENT_OUT_DIR) \
 		$(PROTO_FILES)
 
-proto_dev: $(PROTO_FILES)
+dev: $(PROTO_FILES)
 	@echo "Compiling Go And TS Protobuf files"
 	protoc \
 		--proto_path=$(PROTO_DIR) \
@@ -50,7 +50,3 @@ proto_dev: $(PROTO_FILES)
 		--ts_proto_opt=$(TS_OPTS) \
 		--ts_proto_out=$(CLIENT_OUT_DIR) \
 		$(PROTO_FILES)
-
-
-help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

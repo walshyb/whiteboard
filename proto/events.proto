@@ -32,6 +32,8 @@ message Event {
   oneof event_type {
     MouseEvent mouse_event = 1; 
     AddShapeEvent add_shape = 2;
+    UpdateShapeEvent update_shape = 3;
+    RemoveShapeEvent remove_shape = 4;
   }
 }
 
@@ -41,9 +43,34 @@ message MouseEvent {
   double y = 2;
 }
 
+enum ShapeType {
+  RECTANGLE = 0;
+  ELLIPSE = 1;
+}
+
+message Shape {
+  string id = 1;
+  ShapeType type = 2;
+  double width = 3;
+  double height = 4;
+  double x = 5;
+  double y = 6;
+  string color = 7;
+}
+
 message AddShapeEvent {
   string shape_id = 1;
-  string shape_type = 2;
+  ShapeType shape_type = 2;
+  Shape data = 3;
+}
+
+message UpdateShapeEvent {
+  string shape_id = 1;
+  Shape data = 4;
+}
+
+message RemoveShapeEvent {
+  string shape_id = 1;
 }
 
 message ClientDisconnectEvent {
