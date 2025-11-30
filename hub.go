@@ -74,6 +74,11 @@ func (hub *Hub) run() {
       serverMessage := &events.ServerMessage{
 				SenderName: clientName,
       }
+
+			if clientMessage.ServerId == nil {
+				log.Println("ClientMessage missing ServerId")
+				continue
+			}
 			serverId := *clientMessage.ServerId
 
 			switch event := clientMessage.GetEventType().(type) {
