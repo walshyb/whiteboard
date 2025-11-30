@@ -6,6 +6,7 @@ import {
   ServerMessage,
   Shape,
   ShapeType,
+  AddShapeEvent,
 } from "../proto/generated/events";
 import { drawEllipse, drawRect } from "../graphics";
 
@@ -203,8 +204,10 @@ export default function GraphCanvas() {
     const wx = (event.clientX - viewport.x) / viewport.scale;
     const wy = (event.clientY - viewport.y) / viewport.scale;
 
+    let newShape: Shape | null = null;
+
     if (mode == "rectangle") {
-      const rectangle: Shape = {
+      newShape = {
         type: ShapeType.RECTANGLE,
         width: 100,
         height: 100,
@@ -212,8 +215,21 @@ export default function GraphCanvas() {
         x: wx,
         y: wy,
       } as Shape;
-      shapes.current.push(rectangle);
+      shapes.current.push(newShape);
     }
+
+    if (!clientId.current || !newShape) {
+      return;
+    }
+
+    const clientMessage: ClientMessage = {
+      clientId: clientId.current,
+      addShape: {
+        data: newShape,
+        shapeType: newShape.type,
+      } as AddShapeEvent,
+    };
+    sendWsMessage(clientMessage);
   }
 
   function onMouseLeave() {
