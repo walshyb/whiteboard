@@ -72,13 +72,7 @@ jobs:
                 "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY",
                 "sudo docker pull $IMAGE_URI",
                 "sudo docker rm -f server || true",
-                "sudo docker run -d -p 8080:8080 \\
-                  -e ENV=production \\
-                  -e ALLOWED_ORIGINS=https://bwal.sh,https://walshyb.github.io \\
-                  -e REDIS_ADDR=$REDIS_ADDR \\
-                  -e MONGO_URI=$MONGO_URI \\
-                  --name server $IMAGE_URI",
-                  
+                "sudo docker run -d -p 8080:8080 -e ENV=production -e ALLOWED_ORIGINS=https://bwal.sh,https://walshyb.github.io -e REDIS_ADDR=$REDIS_ADDR -e MONGO_URI=$MONGO_URI --name server $IMAGE_URI",
                 "echo \"Deployment complete.\""
               ]
             },
