@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import "./GraphCanvas.css";
 import { useWebSocket } from "../hooks";
-import { ClientMessage, ServerMessage } from "../proto/generated/events";
+import {
+  ClientMessage,
+  ServerMessage,
+  Shape,
+  ShapeType,
+} from "../proto/generated/events";
+import { drawEllipse, drawRect } from "../graphics";
 
 interface ActiveClients {
   [clientName: string]: {
@@ -14,8 +20,9 @@ export default function GraphCanvas() {
   const canvasRef: React.RefObject<HTMLCanvasElement | any> = useRef(null);
   const clientId = useRef<string | null>(null);
   const [activeClients, setActiveClients] = useState<ActiveClients>({});
-  //type Mode = "drag" | "ellipse" | "select" | "rectangle";
-  //const [mode, setMode] = useState<Mode>("drag");
+  type Mode = "drag" | "ellipse" | "select" | "rectangle";
+  const [mode, _] = useState<Mode>("rectangle");
+  const shapes = useRef<Shape[]>([]);
 
   useEffect(() => {
     function onWindowResize() {
@@ -114,6 +121,18 @@ export default function GraphCanvas() {
         }
       }
 
+      for (const shape of shapes.current) {
+        switch (shape.type) {
+          case ShapeType.RECTANGLE:
+            drawRect(ctx, shape);
+            break;
+
+          case ShapeType.ELLIPSE:
+            drawEllipse(ctx, shape);
+            break;
+        }
+      }
+
       ctx.restore();
 
       raf = requestAnimationFrame(draw);
@@ -127,8 +146,7 @@ export default function GraphCanvas() {
   }, [viewport]);
 
   // Panning
-  function onMouseDown(e: MouseEvent | any) {
-    console.log("click");
+  function onMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
   }
@@ -173,11 +191,34 @@ export default function GraphCanvas() {
     sendWsMessage(clientMessage);
   }
 
-  function onMouseUp() {
+  function onMouseUp(event: React.MouseEvent<HTMLCanvasElement>) {
     dragging.current = false;
+
+    function getRandomHexColor() {
+      const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+      return `#${randomColor.padStart(6, "0")}`; // Pads with leading zeros if needed
+    }
+
+    // World coordinates
+    const wx = (event.clientX - viewport.x) / viewport.scale;
+    const wy = (event.clientY - viewport.y) / viewport.scale;
+
+    if (mode == "rectangle") {
+      const rectangle: Shape = {
+        type: ShapeType.RECTANGLE,
+        width: 100,
+        height: 100,
+        color: getRandomHexColor(),
+        x: wx,
+        y: wy,
+      } as Shape;
+      shapes.current.push(rectangle);
+    }
   }
 
   function onMouseLeave() {
+    dragging.current = false;
+
     if (!clientId.current) {
       return;
     }
