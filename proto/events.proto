@@ -60,7 +60,7 @@ enum ShapeType {
 message Shape {
   // Only optional for frontend client.
   // Backend always creates id
-  optional string id = 1;
+  string id = 1;
 
   ShapeType type = 2;
   double width = 3;
