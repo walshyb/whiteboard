@@ -12,7 +12,8 @@ RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 # Copy go.mod and go.sum first to allow caching dependencies
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 COPY . .
 
@@ -21,8 +22,10 @@ RUN make proto_go
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -mod=mod -ldflags='-s -w' -o /bin/server .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -ldflags='-s -w' -o /bin/server .
 
 FROM alpine:latest
 
