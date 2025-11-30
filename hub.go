@@ -74,18 +74,20 @@ func (hub *Hub) run() {
       serverMessage := &events.ServerMessage{
 				SenderName: clientName,
       }
-			serverId := clientMessage.ServerId
+			serverId := *clientMessage.ServerId
 
 			switch event := clientMessage.GetEventType().(type) {
 				case *events.ClientMessage_AddShape:
 					// Only write to mongo db if server ID of message sender is same as current
-					if serverId != &hub.serverId {
+					if serverId != hub.serverId {
+						print("server IDs don't match", serverId, &hub.serverId)
 						continue
 					}
 
 					addEvent := event.AddShape
 					shape, error := AddShape(hub, addEvent.Data)
 					if error != nil {
+						println("error adding shape", error)
 						continue
 					}
 					serverMessage.EventType = &events.ServerMessage_AddShape{

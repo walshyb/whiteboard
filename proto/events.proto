@@ -58,7 +58,10 @@ enum ShapeType {
 }
 
 message Shape {
-  string id = 1;
+  // Only optional for frontend client.
+  // Backend always creates id
+  optional string id = 1;
+
   ShapeType type = 2;
   double width = 3;
   double height = 4;
@@ -68,7 +71,7 @@ message Shape {
 }
 
 message AddShapeEvent {
-  string shape_id = 1;
+  string shape_id = 1; // TODO: not needed?
   ShapeType shape_type = 2;
   Shape data = 3;
 }

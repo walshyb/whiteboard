@@ -7,8 +7,10 @@ import {
   Shape,
   ShapeType,
   AddShapeEvent,
+  Board,
 } from "../proto/generated/events";
 import { drawEllipse, drawRect } from "../graphics";
+import { API_URL } from "../helpers";
 
 interface ActiveClients {
   [clientName: string]: {
@@ -24,6 +26,7 @@ export default function GraphCanvas() {
   type Mode = "drag" | "ellipse" | "select" | "rectangle";
   const [mode, _] = useState<Mode>("rectangle");
   const shapes = useRef<Shape[]>([]);
+  const [boardFetched, setBoardFetched] = useState(false);
 
   useEffect(() => {
     function onWindowResize() {
@@ -33,6 +36,16 @@ export default function GraphCanvas() {
       }
     }
     window.addEventListener("resize", onWindowResize);
+
+    (async function () {
+      const result = await fetch(API_URL + "/board");
+      const board: Board = await result.json();
+      if (board && board.shapes) {
+        shapes.current = board.shapes;
+      }
+      setBoardFetched(true);
+    })();
+
     return () => {
       window.removeEventListener("resize", onWindowResize);
     };
@@ -66,6 +79,7 @@ export default function GraphCanvas() {
         });
       }
     },
+    [boardFetched],
   );
 
   const [viewport, setViewport] = useState({

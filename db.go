@@ -49,7 +49,7 @@ func makeMongoClient(ctx context.Context) *mongo.Client {
 	}
 
   collection := client.Database("whiteboards").Collection("demo")
-	_, err = EnsureDemoBoard(ctx, collection)
+	_, err = EnsureDemoBoard(contextWithTimeout, collection)
 	if err != nil {
 		println("Failed to demo board's presence");
 	}
