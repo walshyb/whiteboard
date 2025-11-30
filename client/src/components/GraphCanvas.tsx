@@ -38,12 +38,21 @@ export default function GraphCanvas() {
     window.addEventListener("resize", onWindowResize);
 
     (async function () {
-      const result = await fetch(API_URL + "/board");
-      const board: Board = await result.json();
-      if (board && board.shapes) {
-        shapes.current = board.shapes;
+      try {
+        const result = await fetch(API_URL + "/board");
+        if (!result.ok) {
+          console.error("Failed to fetch board:", result.status);
+          return;
+        }
+        const board: Board = await result.json();
+        if (board && board.shapes) {
+          shapes.current = board.shapes;
+        }
+      } catch (err) {
+        console.error("Error fetching board:", err);
+      } finally {
+        setBoardFetched(true);
       }
-      setBoardFetched(true);
     })();
 
     return () => {
