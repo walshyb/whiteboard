@@ -3,13 +3,15 @@ package main
 import (
   "log"
   "context"
+
   "github.com/redis/go-redis/v9"
+  "github.com/google/uuid"
   "go.mongodb.org/mongo-driver/v2/mongo"
 	"google.golang.org/protobuf/proto"
 	 events "github.com/walshyb/whiteboard/proto"
 )
 
-type Hub struct{
+type Hub struct {
   clients map[*Client]bool
   register chan *Client
   unregister chan *Client
@@ -43,7 +45,7 @@ func (hub *Hub) run() {
         }
 
         payload := events.ServerMessage{
-					NotificationType: &events.ServerMessage_ClientDisconnect {
+					EventType: &events.ServerMessage_ClientDisconnect {
 						ClientDisconnect: &events.ClientDisconnectEvent{
 							ClientName: client.name,
 						},
@@ -65,7 +67,6 @@ func (hub *Hub) run() {
       }
 
       clientName, err := hub.redis.Get(hub.ctx, clientMessage.ClientId).Result()
-
       if err != nil {
         println("error getting client ID from redis")
 				continue
@@ -73,10 +74,29 @@ func (hub *Hub) run() {
 
       serverMessage := &events.ServerMessage{
 				SenderName: clientName,
-				NotificationType: &events.ServerMessage_EventData {
-					EventData: clientMessage.GetEvent(),
-				},
       }
+
+			switch event := clientMessage.GetEventType().(type) {
+				case *events.ClientMessage_AddShape:
+					addEvent := event.AddShape
+					shape, error := AddShape(hub, addEvent.Data)
+					if error != nil {
+						continue
+					}
+					serverMessage.EventType = &events.ServerMessage_AddShape{
+						AddShape: &events.AddShapeEvent{
+							Data: shape,
+						},
+					}
+					break
+				case *events.ClientMessage_MouseEvent:
+					serverMessage.EventType = &events.ServerMessage_MouseEvent {
+						MouseEvent: clientMessage.GetMouseEvent(),
+					}
+					break
+					
+				default:
+			}
 
       for client := range hub.clients {
         if client.id == clientMessage.GetClientId() {

@@ -13,8 +13,6 @@ import (
 	events "github.com/walshyb/whiteboard/proto"
 )
 
-var adjectives = [8]string{"bright", "silent", "rough", "narrow", "gentle", "sharp", "steady", "fragile",}
-var nouns = [8]string{"river","lantern","stone", "meadow","circuit","anchor","window","compass",}
 var serverName = strconv.FormatInt(time.Now().UnixNano(), 10)
 
 var upgrader = websocket.Upgrader{

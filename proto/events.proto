@@ -11,7 +11,15 @@ message ClientMessage {
   // Go server sets this BEFORE publishing to Redis.
   optional string server_id = 2; 
 
-  Event event = 10;
+  oneof event_type {
+    MouseEvent mouse_event = 9; 
+    AddShapeEvent add_shape = 10;
+    UpdateShapeEvent update_shape = 11;
+    RemoveShapeEvent remove_shape = 12;
+    GetBoardEvent board = 13;
+    ClientConnectEvent client_connected = 14;
+    ClientDisconnectEvent client_disconnect = 15;
+  }
 }
 
 message ServerMessage {
@@ -20,23 +28,24 @@ message ServerMessage {
   // Only for handshakes
   string client_id = 2;
 
-  oneof notification_type {
-    Event event_data = 10;
-
-    ClientConnectEvent client_connected = 11;
-    ClientDisconnectEvent client_disconnect = 12;
-  }
-}
-
-message Event {
   oneof event_type {
-    MouseEvent mouse_event = 1; 
-    AddShapeEvent add_shape = 2;
-    UpdateShapeEvent update_shape = 3;
-    RemoveShapeEvent remove_shape = 4;
+    MouseEvent mouse_event = 9; 
+    AddShapeEvent add_shape = 10;
+    UpdateShapeEvent update_shape = 11;
+    RemoveShapeEvent remove_shape = 12;
+    GetBoardEvent board = 13;
+    ClientConnectEvent client_connected = 14;
+    ClientDisconnectEvent client_disconnect = 15;
   }
 }
 
+message ClientDisconnectEvent {
+  string client_name = 1;
+}
+
+message ClientConnectEvent {
+  string client_name = 1;
+}
 
 message MouseEvent {
   double x = 1;
@@ -73,10 +82,12 @@ message RemoveShapeEvent {
   string shape_id = 1;
 }
 
-message ClientDisconnectEvent {
-  string client_name = 1;
+message Board {
+  string id = 1;
+  repeated Shape shapes = 2;
+  string name = 3;
 }
 
-message ClientConnectEvent {
-  string client_name = 1;
+message GetBoardEvent {
+  Board board = 1;
 }
