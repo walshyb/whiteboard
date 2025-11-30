@@ -88,8 +88,10 @@ func main() {
 	})
 
 	http.HandleFunc("/board", func (w http.ResponseWriter, r *http.Request) {
+		// TODO: allow OPTIONS, GET method
 		origin := r.Header.Get("Origin")
 		isAllowed := false
+		// TODO: create helper
     for _, allowedOrigin := range allowedOrigins {
         if origin == allowedOrigin {
             isAllowed = true
