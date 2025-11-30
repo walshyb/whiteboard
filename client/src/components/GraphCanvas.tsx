@@ -38,7 +38,7 @@ export default function GraphCanvas() {
         return;
       }
 
-      const mouseEvent = serverMessage.eventData?.mouseEvent;
+      const mouseEvent = serverMessage.mouseEvent;
       if (mouseEvent && serverMessage.senderName) {
         const remoteClientName = serverMessage.senderName;
         const { x, y } = mouseEvent;
@@ -164,11 +164,9 @@ export default function GraphCanvas() {
 
     const clientMessage: ClientMessage = {
       clientId: clientId.current,
-      event: {
-        mouseEvent: {
-          x: wx,
-          y: wy,
-        },
+      mouseEvent: {
+        x: wx,
+        y: wy,
       },
     };
 
@@ -186,11 +184,9 @@ export default function GraphCanvas() {
 
     const clientMessage: ClientMessage = {
       clientId: clientId.current,
-      event: {
-        mouseEvent: {
-          x: -1,
-          y: -1,
-        },
+      mouseEvent: {
+        x: -1,
+        y: -1,
       },
     };
 
