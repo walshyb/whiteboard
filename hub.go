@@ -89,9 +89,9 @@ func (hub *Hub) run() {
 					}
 
 					addEvent := event.AddShape
-					shape, error := AddShape(hub, addEvent.Data)
-					if error != nil {
-						println("error adding shape", error)
+					shape, err := AddShape(hub, addEvent.Data)
+					if err != nil {
+						println("error adding shape", err)
 						continue
 					}
 					serverMessage.EventType = &events.ServerMessage_AddShape{
