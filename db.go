@@ -37,21 +37,19 @@ func makeMongoClient(ctx context.Context) *mongo.Client {
 	client, err := mongo.Connect(options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		//return nil, fmt.Errorf("mongo connect error: %w", err)
-		println("mongo connect error")
-		return nil
+		panic("mongo connect error")
 	}
 
 	// Ping to verify we can actually reach the server
 	if err := client.Ping(contextWithTimeout, nil); err != nil {
 		//return nil, fmt.Errorf("mongo ping error: %w", err)
-		println("mongo ping error")
-		return nil
+		panic("mongo ping error")
 	}
 
   collection := client.Database("whiteboards").Collection("demo")
 	_, err = EnsureDemoBoard(contextWithTimeout, collection)
 	if err != nil {
-		println("Failed to demo board's presence");
+		panic("Failed to ensure demo board's presence");
 	}
 
 	return client
