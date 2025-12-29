@@ -13,8 +13,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       REDIS_ADDR: redis:6379
-      ALLOWED_ORIGINS: "https://bwal.sh,https://walshyb.github.io"
-      ENV: production
+      ENV: development
 
   mongo:
     image: mongo:6.0
